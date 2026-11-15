@@ -41,26 +41,58 @@ const tsRule = (hasTimes) => (hasTimes
   ? 'Where a point comes from a specific moment, end it with that moment\'s timestamp in square brackets exactly as it appears in the material, for example [12:34]. Only use timestamps that appear in the material.'
   : 'The material has no timestamps, so do not include any.');
 
-export function summaryPrompt(ctx, { today, hasTimes }) {
+const TODO_SECTION = (today) => `## To-do
+Every assignment, reading, exam date or deadline mentioned, one per line, formatted exactly as:
+- [ ] task description (due: YYYY-MM-DD)
+Work out the date from today's date (${today}) when the lecturer says things like "next Friday". If no date is given, write (due: unknown). If nothing was mentioned, write "None mentioned."`;
+
+const NOTE_STYLE = `Write it the way a strong student takes class notes, not as an essay or abstract:
+- Organise by topic in the order it was taught, one "## Topic" heading per topic (use "###" for subtopics).
+- Under each heading use nested bullet points: the main idea, then indented supporting details, steps, examples, formulas and the lecturer's emphasis.
+- Bold each **key term** where it is first defined, with its definition right there.
+- Keep bullets short and scannable. Include worked examples, numbers and formulas exactly; use \`code\` for formulas if helpful.
+- Mark anything the lecturer stressed or hinted will be tested with "**(Exam)**".`;
+
+export function summaryPrompt(ctx, { today, hasTimes, master = null }) {
+  if (master) {
+    return `${ctx.text}
+
+Today's date is ${today}.
+
+This material combines several lectures and the student's notes, plus extracts from course materials, for an upcoming ${master.kind}${master.date ? ` on ${master.date}` : ''}. Turn ALL of it into one complete set of study notes the student can revise from for that ${master.kind}. Merge overlapping content across lectures into single topics rather than repeating it lecture by lecture, and fill gaps from the course materials (cite them). Cover everything, not just highlights.
+
+${NOTE_STYLE}
+
+Then add these sections, in this order, after the topic notes:
+
+## Key terms
+A glossary of every important term as "**term**: definition", alphabetical.
+
+## Must-know for the ${master.kind}
+A bulleted checklist of the core facts, formulas, processes and comparisons most likely to be tested.
+
+## Practice questions
+Eight to twelve exam-style questions (mix of short-answer and explain/compare/apply), each followed on the next line by a brief answer in italics.
+
+${TODO_SECTION(today)}
+
+Do not include any timestamps.`;
+  }
   return `${ctx.text}
 
 Today's date is ${today}.
 
-Write a study summary of this lecture in Markdown with exactly these sections, in this order:
+Write lecture notes for this class in Markdown. Start with one line in italics saying what the lecture was about, then the notes.
 
-## Overview
-Two or three sentences on what the lecture covered.
+${NOTE_STYLE}
+- ${tsRule(hasTimes)}
 
-## Key points
-A bulleted list of the most important ideas, each one or two sentences. ${tsRule(hasTimes)}
+Then end with these two sections:
 
 ## Key terms
-A bulleted list of important terms as "**term**: definition". Skip this section's bullets and write "None." if there are none.
+A bulleted list of important terms as "**term**: definition". Write "None." if there are none.
 
-## To-do
-Every assignment, reading, exam date or deadline mentioned, one per line, formatted exactly as:
-- [ ] task description (due: YYYY-MM-DD)
-Work out the date from today's date when the lecturer says things like "next Friday". If no date is given, write (due: unknown). If nothing was mentioned, write "None mentioned."`;
+${TODO_SECTION(today)}`;
 }
 
 export function askPrompt(ctx, history, question, { hasTimes }) {

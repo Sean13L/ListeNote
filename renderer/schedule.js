@@ -283,7 +283,7 @@ export function mountMaster(container, { courseId = null } = {}) {
     note.master = { kind: form.kind.value, date: form.date.value, sources: picked.map((n) => n.id) };
     touchNote(note);
     if (form.date.value) addAssignment({ title: name, due: form.date.value, courseId, noteId: note.id });
-    toast('Master note created. Add anything else you need, then use Summary, Cards, Quiz or Practice on it.');
+    toast('Master note created. Its study notes are being written in the Summary tab.');
     S.openNote(note.id);
   }
 

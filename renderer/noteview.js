@@ -145,7 +145,10 @@ export function mountNote(container, note, { viewer = false } = {}) {
   renderRecordButton();
   renderMeta();
   renderAttachments();
-  selectTab(c.tab);
+  // A new master note writes its study notes straight away.
+  const autoMaster = note.master && !note.summary && !isRunning(`summary:${note.id}`) && aiReady().ok;
+  selectTab(autoMaster ? 'summary' : c.tab);
+  if (autoMaster) generateSummary();
   renderTransport();
   if (note.audio) loadPlayer();
   if (!note.title && !note.text && !viewer) title.focus();
@@ -864,11 +867,14 @@ async function contextFor(note, extra = '') {
   const lines = ctx.editor.getLines();
   const course = courseById(note.courseId);
   const transcript = note.speakers ? note.transcript.map((s) => ({ ...s, text: s.spk != null ? `${note.speakers[s.spk]}: ${s.text}` : s.text })) : note.transcript;
+  // A master note studies its source lectures' recordings too, one untimed block per lecture.
+  const masterSrc = note.master ? (note.master.sources || []).map((id) => S.notes[id]).filter((n) => n && n.transcript && n.transcript.length) : [];
+  if (masterSrc.length) transcript.push(...masterSrc.map((n) => ({ s: 0, e: 0, text: `(Lecture: ${n.title || 'Untitled'})\n${n.transcript.map((x) => x.text).join(' ')}` })));
   const query = `${extra} ${extra} ${note.title} ${note.text} ${note.transcript.slice(0, 400).map((s) => s.text).join(' ')}`;
   const sources = note.courseId ? await sourcesFor(note.courseId, query) : [];
   const built = buildContext({ title: note.title, course: course ? courseLabel(course) : '', lines, transcript, sources });
   built.empty = built.empty && !sources.length;
-  const hasTimes = note.transcript.length > 0 || lines.some((l) => l.t !== null);
+  const hasTimes = !note.master && (note.transcript.length > 0 || lines.some((l) => l.t !== null));
   return { built, hasTimes };
 }
 
@@ -1016,7 +1022,7 @@ async function generateSummary() {
   if (built.empty) { toast('Type some notes or transcribe the recording first.'); return; }
   const key = `summary:${note.id}`;
   try {
-    const text = await runAI(key, summaryPrompt(built, { today: todayStr(), hasTimes }));
+    const text = await runAI(key, summaryPrompt(built, { today: todayStr(), hasTimes, master: note.master || null }));
     note.summary = { markdown: text, created: Date.now(), truncated: built.truncated };
     note.updated = Date.now();
     saveNote(note.id, { now: true });
@@ -1042,8 +1048,8 @@ function renderSummary() {
 
   if (!note.summary) {
     const gate = aiGate('A summary');
-    c.panel.append(emptyState('sparkle', 'Summarise this lecture', 'Get an overview, the key points with links back to the moment they were said, key terms, and any deadlines that were mentioned.',
-      gate ? null : button('Write summary', () => generateSummary(), { kind: 'primary', iconName: 'sparkle' })), gate, gate ? null : aiFootnote());
+    c.panel.append(emptyState('sparkle', note.master ? 'Write study notes' : 'Write lecture notes', note.master ? 'Turn every lecture, recording and course material in this master note into one set of organised study notes, with a glossary, must-know list and practice questions.' : 'Get organised class notes by topic, with key terms, examples, links back to the moment they were said, and any deadlines that were mentioned.',
+      gate ? null : button(note.master ? 'Write study notes' : 'Write notes', () => generateSummary(), { kind: 'primary', iconName: 'sparkle' })), gate, gate ? null : aiFootnote());
     return;
   }
 

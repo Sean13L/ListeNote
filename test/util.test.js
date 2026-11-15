@@ -276,3 +276,12 @@ test('materials: unzip reads stored and deflated entries, chunks keep page label
   const parts = chunk([{ loc: 'p. 3', text: `${'x'.repeat(1000)}\n${'y'.repeat(1000)}` }]);
   assert.deepEqual(parts.map((p) => [p.loc, p.text.length]), [['p. 3', 1000], ['p. 3', 1000]]);
 });
+
+test('summaryPrompt writes class notes, and exam study notes for a master note', async () => {
+  const { buildContext, summaryPrompt } = await load('prompts.js');
+  const ctx = buildContext({ title: 'Bio', lines: [{ t: null, text: 'cells' }], transcript: [] });
+  assert.match(summaryPrompt(ctx, { today: '2026-11-14', hasTimes: false }), /class notes[\s\S]*## To-do/);
+  const m = summaryPrompt(ctx, { today: '2026-11-14', hasTimes: false, master: { kind: 'Midterm', date: '2026-12-01' } });
+  assert.match(m, /Midterm on 2026-12-01/);
+  assert.match(m, /## Practice questions[\s\S]*## To-do/);
+});
