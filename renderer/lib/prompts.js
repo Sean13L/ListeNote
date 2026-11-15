@@ -46,12 +46,13 @@ Every assignment, reading, exam date or deadline mentioned, one per line, format
 - [ ] task description (due: YYYY-MM-DD)
 Work out the date from today's date (${today}) when the lecturer says things like "next Friday". If no date is given, write (due: unknown). If nothing was mentioned, write "None mentioned."`;
 
-const NOTE_STYLE = `Write it the way a strong student takes class notes, not as an essay or abstract:
-- Organise by topic in the order it was taught, one "## Topic" heading per topic (use "###" for subtopics).
-- Under each heading use nested bullet points: the main idea, then indented supporting details, steps, examples, formulas and the lecturer's emphasis.
+const NOTE_STYLE = `Write them as ordinary study notes on the subject itself, like a good student's notebook or a textbook-style note sheet:
+- State the content directly. Never narrate the source: do not write "the lecture", "the lecturer", "the professor", "the speaker", "the transcript", "the notes", "this class", "he/she said", "was discussed" or "was explained". Write "Total surplus = consumer surplus + producer surplus", not "The lecture explained that total surplus...".
+- Organise by topic, one "## Topic" heading per topic (use "###" for subtopics).
+- Under each heading use nested bullet points: the main idea, then indented details, steps, examples, formulas.
 - Bold each **key term** where it is first defined, with its definition right there.
-- Keep bullets short and scannable. Include worked examples, numbers and formulas exactly; use \`code\` for formulas if helpful.
-- Mark anything the lecturer stressed or hinted will be tested with "**(Exam)**".`;
+- Keep bullets short and scannable, using fragments and symbols (=, →, ↑, ↓) where natural. Include examples, numbers and formulas exactly.
+- Mark points that are likely to be tested with "**(Exam)**".`;
 
 // Split a transcript into runs whose formatted text stays under `budget` characters.
 export function chunkTranscript(transcript, budget) {
@@ -117,7 +118,7 @@ Do not include any timestamps.`;
 
 Today's date is ${today}.
 
-Write lecture notes for this class in Markdown. Start with one line in italics saying what the lecture was about, then the notes.
+Write study notes on this material in Markdown.
 
 ${NOTE_STYLE}
 - ${tsRule(hasTimes)}
