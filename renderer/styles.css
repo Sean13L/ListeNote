@@ -492,7 +492,8 @@ body.mac .show-side { left: 8px; top: 36px; }
 .sep-slides { left: var(--w-slides, 0px); }
 :root.slides-hidden .sep-slides { display: none; }
 .viewer-pane { min-width: 0; overflow: hidden; display: flex; flex-direction: column; border-right: 1px solid var(--line); background: var(--bg); }
-:root.slides-hidden .viewer-pane { display: none; }
+/* Hidden = zero width but still in the grid, so notes and the study panel keep their columns. */
+:root.slides-hidden .viewer-pane { visibility: hidden; border: 0; }
 .viewer-head { display: flex; align-items: center; gap: 6px; padding: 8px; border-bottom: 1px solid var(--line); }
 .viewer-head select { flex: 1; min-width: 0; }
 .viewer-body { flex: 1; min-height: 0; overflow-y: auto; }
