@@ -455,3 +455,21 @@ body.resizing iframe, body.resizing audio { pointer-events: none; }
 .note { grid-template-columns: minmax(0, 1fr); }
 .note-head-row { min-width: 0; }
 .title-wrap .note-title { min-width: 0; text-overflow: ellipsis; }
+/* ••• on each note card (top right); shown on the open card, on hover and on keyboard focus. */
+.note-row { position: relative; }
+.card-more { position: absolute; top: 7px; right: 6px; z-index: 1; width: 28px; height: 28px; opacity: 0; }
+.note-row:hover .card-more, .card-more:focus-visible, .card-more[aria-expanded="true"], .note-row:has(.note-item.active) .card-more { opacity: 1; }
+.note-row .note-item-top { padding-right: 26px; }
+/* The header ••• is only for when there is no notes list to hold it. */
+.note-head .head-more { display: none; }
+:root.list-hidden .note-head .head-more, #app.viewer .note-head .head-more { display: inline-grid; }
+/* Arrow at the top to hide the sidebar, and to bring it back. */
+.side-toggle { -webkit-app-region: no-drag; width: 28px; height: 28px; }
+.hide-side { margin-left: auto; transform: scaleX(-1); }
+.show-side { display: none; position: absolute; top: 10px; left: 10px; z-index: 30; }
+body.mac .show-side { left: 80px; top: 8px; }
+:root.side-hidden .show-side { display: inline-grid; }
+:root.side-hidden body.mac .list-head { padding-left: 116px; }
+:root.side-hidden body:not(.mac) .list-head { padding-left: 46px; }
+#app.viewer .show-side { display: none !important; }
+:root.side-hidden.list-hidden body:not(.mac) .note-head, :root.side-hidden body:not(.mac) #app.no-list .page { padding-left: 52px; }

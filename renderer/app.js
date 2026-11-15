@@ -9,7 +9,7 @@ import { separator, applyLayout, togglePane } from './layout.js';
 import { mountSchedule, mountMaster, sessionStartMs, openSession } from './schedule.js';
 import { todayStr } from './lib/util.js';
 import { h, clear, icon, iconButton, button, toast, confirmDialog, formDialog, showMenu, emptyState, errorMessage } from './dom.js';
-import { mountNote, unmountNote, currentNoteId, toggleRecord, togglePlay, playFromCaret, importAudio, seek } from './noteview.js';
+import { mountNote, unmountNote, currentNoteId, toggleRecord, togglePlay, playFromCaret, importAudio, seek, openMoreMenu } from './noteview.js';
 import { mountReview, mountAssignments, mountGuides, unmountStudy } from './study.js';
 import { mountSettings } from './settings.js';
 import { recorder, transcription } from './audio.js';
@@ -85,7 +85,8 @@ function buildSidebar() {
     } });
   sidebarBody = h('div', { class: 'sidebar-body' });
   $sidebar.append(
-    h('div', { class: 'brand' }, h('span', { class: 'brand-mark', 'aria-hidden': 'true' }, icon('mic', 15)), h('span', { class: 'brand-name', text: 'ListeNote' })),
+    h('div', { class: 'brand' }, h('span', { class: 'brand-mark', 'aria-hidden': 'true' }, icon('mic', 15)), h('span', { class: 'brand-name', text: 'ListeNote' }),
+      iconButton('chevron', 'Hide sidebar', () => togglePane('side'), { class: 'side-toggle hide-side', size: 16 })),
     h('div', { class: 'sidebar-top' },
       h('div', { class: 'search-wrap' }, icon('search', 15), searchInput),
       button('New note', () => createNote(), { kind: 'primary', iconName: 'plus', attrs: { class: 'btn btn-primary btn-block' } })),
@@ -221,6 +222,14 @@ function createNote() {
   S.openNote(note.id);
 }
 
+// The ••• on a note card: open that note, then show its menu under the card's button.
+function noteMenu(id) {
+  if (S.noteId !== id) S.openNote(id);
+  if (S.noteId !== id) return;
+  const anchor = $list.querySelector(`.card-more[data-note="${id}"]`);
+  if (!openMoreMenu(anchor)) toast('Unlock this note to see its options.');
+}
+
 function renderList() {
   if (S.view.kind !== 'notes') return;
   const notes = visibleNotes();
@@ -243,7 +252,8 @@ function renderList() {
     }
     if (!preview) preview = h('span', { class: 'note-snippet', text: (n.text || '').replace(/\s+/g, ' ').slice(0, 110) || (n.transcript && n.transcript.length ? n.transcript[0].text : 'No text yet') });
     const busy = recorder.active && recorder.noteId === n.id ? 'Recording' : transcription.noteId === n.id ? 'Transcribing' : null;
-    return h('li', null, h('button', { type: 'button', class: `note-item ${n.id === S.noteId ? 'active' : ''}`, 'aria-current': n.id === S.noteId ? 'true' : null, onClick: () => S.openNote(n.id) },
+    const menuBtn = iconButton('more', `Actions for ${n.title || 'Untitled lecture'}`, () => noteMenu(n.id), { class: 'card-more', size: 16, attrs: { 'aria-haspopup': 'menu', 'data-note': n.id } });
+    return h('li', { class: 'note-row' }, menuBtn, h('button', { type: 'button', class: `note-item ${n.id === S.noteId ? 'active' : ''}`, 'aria-current': n.id === S.noteId ? 'true' : null, onClick: () => S.openNote(n.id) },
       h('span', { class: 'note-item-top' },
         course ? h('span', { class: 'dot', style: { '--dot': course.color } }) : null,
         h('span', { class: 'note-item-title', text: n.title || 'Untitled lecture' }),
@@ -364,7 +374,9 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) flush
       return;
     }
     buildSidebar();
-    $app.append(separator('side'), separator('list'));
+    $app.append(separator('side'), separator('list'),
+      // Shown at the top left only while the sidebar is hidden.
+      iconButton('chevron', 'Show sidebar', () => togglePane('side'), { class: 'side-toggle show-side', size: 16 }));
     applyLayout();
     setInterval(checkReminders, 30000);
     checkReminders();

@@ -70,7 +70,7 @@ export function mountNote(container, note, { viewer = false } = {}) {
     S.lib.courses.filter((co) => !co.archived || co.id === note.courseId).map((co) => h('option', { value: co.id, selected: co.id === note.courseId, text: courseLabel(co) })),
   );
   c.recordBtn = h('button', { type: 'button', class: 'btn btn-record', onClick: () => toggleRecord() });
-  c.moreBtn = iconButton('more', 'More actions', () => openMoreMenu());
+  c.moreBtn = iconButton('more', 'More actions', () => openMoreMenu(), { class: 'head-more' });
   const sourceSelect = h('select', { class: 'input input-small source-select', 'aria-label': 'What to record', title: 'What to record',
     onChange: () => { S.lib.settings.recordSource = sourceSelect.value; saveLib(); } },
   [['mic', 'Microphone'], ['both', 'Mic + computer audio'], ['system', 'Computer audio only']].map(([v, l]) => h('option', { value: v, selected: (S.lib.settings.recordSource || 'mic') === v, text: l })));
@@ -645,10 +645,14 @@ async function toggleSkipSilence() {
 
 // ================================================================= menu ===
 
-function openMoreMenu() {
+// Opens the open note's menu under `anchor` (the ••• on its card in the notes
+// list, or in the header when the list is hidden). Returns false if the note
+// is locked and closed.
+export function openMoreMenu(anchor = ctx && ctx.moreBtn) {
   const c = ctx;
+  if (!c || !c.editor) return false;
   const { note } = c;
-  showMenu(c.moreBtn, [
+  showMenu(anchor, [
     { label: note.pinned ? 'Unpin' : 'Pin to top', icon: 'pin', onSelect: () => { note.pinned = !note.pinned; touchNote(note); renderMeta(); bus.emit('library'); } },
     c.viewer ? null : { label: 'Reading mode', checked: c.readOnly, onSelect: () => { c.readOnly = !c.readOnly; c.editor.setReadOnly(c.readOnly); renderMeta(); } },
     c.viewer ? null : { label: 'Open in new window', icon: 'copy', onSelect: () => api.openWindow(note.id) },
@@ -671,6 +675,7 @@ function openMoreMenu() {
     note.audio ? { label: 'Remove recording…', icon: 'trash', danger: true, onSelect: () => removeRecording() } : null,
     c.viewer ? null : { label: 'Delete note…', icon: 'trash', danger: true, onSelect: () => removeNote() },
   ]);
+  return true;
 }
 
 async function removeRecording() {
