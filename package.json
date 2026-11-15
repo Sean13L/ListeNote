@@ -1,0 +1,66 @@
+{
+  "name": "listenote",
+  "productName": "ListeNote",
+  "version": "0.1.0",
+  "description": "Record lectures, type timestamped notes, and study from them with the AI subscription you already have. Runs locally.",
+  "main": "main/main.js",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test",
+    "dist": "electron-builder --mac dmg",
+    "dist:all": "electron-builder -mwl"
+  },
+  "build": {
+    "appId": "io.listenote.app",
+    "productName": "ListeNote",
+    "files": [
+      "main/**",
+      "renderer/**",
+      "shared/**",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "node_modules/onnxruntime-node/**",
+      "node_modules/sharp/**",
+      "node_modules/@img/**"
+    ],
+    "mac": {
+      "category": "public.app-category.education",
+      "target": [
+        "dmg"
+      ],
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "ListeNote records audio so your notes can be linked to the lecture recording."
+      },
+      "identity": "-",
+      "hardenedRuntime": false
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Education"
+    }
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^4.3.2",
+    "pdfjs-dist": "^4.10.38"
+  },
+  "devDependencies": {
+    "electron": "^45.3.2",
+    "electron-builder": "^26.18.0"
+  },
+  "author": "Sean13L",
+  "homepage": "https://github.com/Sean13L/ListeNote",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Sean13L/ListeNote.git"
+  }
+}
