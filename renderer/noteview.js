@@ -109,7 +109,8 @@ export function mountNote(container, note, { viewer = false } = {}) {
   if (!viewer) {
     c.editor.toolbar.append(h('span', { class: 'tool-sep', 'aria-hidden': 'true' }),
       h('button', { type: 'button', class: 'tool', 'aria-label': 'Insert image', title: 'Insert image', onMousedown: (e) => e.preventDefault(), onClick: () => insertImage() }, icon('image', 16)),
-      h('button', { type: 'button', class: 'tool', 'aria-label': 'Attach a file', title: 'Attach a file (slides, handouts)', onMousedown: (e) => e.preventDefault(), onClick: () => attachFile() }, icon('paperclip', 16)));
+      h('button', { type: 'button', class: 'tool', 'aria-label': 'Attach a file', title: 'Attach a file (slides, handouts)', onMousedown: (e) => e.preventDefault(), onClick: () => attachFile() }, icon('paperclip', 16)),
+      h('button', { type: 'button', class: 'tool', 'aria-label': 'Show or hide course materials', title: 'View course materials (slides, readings) beside your notes', onMousedown: (e) => e.preventDefault(), onClick: () => togglePane('slides') }, icon('book', 16)));
   } else c.editor.setReadOnly(true);
   const editorPane = h('section', { class: 'note-editor', 'aria-label': 'Notes' }, c.editor.toolbar, h('div', { class: 'editor-scroll' }, c.editor.el));
 
@@ -132,7 +133,7 @@ export function mountNote(container, note, { viewer = false } = {}) {
     iconButton('chevron', 'Hide study panel', () => togglePane('panel'), { class: 'side-toggle hide-panel', size: 16 })), c.panel);
 
   c.transport = h('footer', { class: 'transport' });
-  container.append(h('div', { class: 'note' }, head, h('div', { class: 'note-body' }, editorPane, side, separator('panel', { fromRight: true, tab: false }),
+  container.append(h('div', { class: 'note' }, head, h('div', { class: 'note-body' }, editorPane, viewerPane(note), side, separator('panel', { fromRight: true, tab: false }), separator('slides', { fromRight: true, tab: false }),
     iconButton('chevron', 'Show study panel', () => togglePane('panel'), { class: 'side-toggle show-panel', size: 16 })), c.transport));
 
   c.offs.push(
@@ -1012,6 +1013,42 @@ function renderTranscript() {
       } },
     ]);
   }
+}
+
+// ------------------------------------------------------ materials viewer ---
+
+// Last material opened per course, so switching notes keeps your place.
+const lastMaterial = new Map();
+
+// Slides and readings beside the notes. PDFs open in Chromium's viewer (scrolls vertically);
+// PowerPoint, Word, text and files added before originals were kept show their text, slide by slide.
+function viewerPane(note) {
+  const body = h('div', { class: 'viewer-body' });
+  const mats = [...(note.courseId ? courseMaterials(note.courseId) : []), ...(S.lib.materials || []).filter((m) => m.courseId !== note.courseId)];
+  const pick = h('select', { class: 'input input-small', 'aria-label': 'Course material to view', onChange: () => show(pick.value) },
+    mats.length ? mats.map((m) => h('option', { value: m.id, text: m.courseId === note.courseId ? m.name : `${m.name} (${courseLabel(courseById(m.courseId) || {}) || 'other course'})` })) : h('option', { value: '', text: 'No course materials yet' }));
+
+  async function show(id) {
+    const m = mats.find((x) => x.id === id);
+    clear(body);
+    if (!m) {
+      body.append(h('div', { class: 'viewer-text' }, h('p', { text: 'Add slides or readings under the course\'s "Course materials" to view them here.' })));
+      return;
+    }
+    lastMaterial.set(note.courseId, id);
+    if (m.ext === 'pdf') { body.append(h('iframe', { src: `app://local/materials/${m.id}.pdf`, title: m.name })); return; }
+    try {
+      const chunks = await api.materialsLoad(m.id);
+      if (pick.value !== id) return;
+      body.append(h('div', { class: 'viewer-text' }, chunks.map((c) => h('section', null, c.loc ? h('h4', { text: c.loc }) : null, h('p', { text: c.text })))));
+    } catch (err) { body.append(h('div', { class: 'viewer-text' }, h('p', { text: errorMessage(err) }))); }
+  }
+
+  const start = mats.find((m) => m.id === lastMaterial.get(note.courseId)) || mats[0];
+  if (start) pick.value = start.id;
+  show(start ? start.id : '');
+  return h('section', { class: 'viewer-pane', 'aria-label': 'Course materials viewer' },
+    h('div', { class: 'viewer-head' }, pick, iconButton('x', 'Hide materials viewer', () => togglePane('slides'), { size: 16 })), body);
 }
 
 // --------------------------------------------------------------- summary ---

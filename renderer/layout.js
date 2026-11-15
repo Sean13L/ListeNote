@@ -1,4 +1,4 @@
-// Resizable, collapsible panes: sidebar, notes list and the study panel.
+// Resizable, collapsible panes: sidebar, notes list, materials viewer and the study panel.
 // Drag a divider to resize; drag it past the minimum, double-click it, or press
 // Enter on it to collapse. Widths are remembered in settings.
 
@@ -9,6 +9,7 @@ const PANES = {
   side: { label: 'sidebar', min: 180, max: 420, def: 250 },
   list: { label: 'notes list', min: 200, max: 520, def: 300 },
   panel: { label: 'study panel', min: 280, max: 760, def: 400 },
+  slides: { label: 'materials viewer', min: 260, max: 1000, def: 460, hidden: true },
 };
 
 function state() {
@@ -16,7 +17,7 @@ function state() {
   if (!st.layout) st.layout = {};
   for (const [k, p] of Object.entries(PANES)) {
     if (typeof st.layout[k] !== 'number') st.layout[k] = p.def;
-    st.layout[`${k}Hidden`] = !!st.layout[`${k}Hidden`];
+    st.layout[`${k}Hidden`] = st.layout[`${k}Hidden`] === undefined ? !!p.hidden : !!st.layout[`${k}Hidden`];
   }
   return st.layout;
 }

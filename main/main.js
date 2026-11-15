@@ -71,6 +71,14 @@ function serveApp() {
         return new Response(body, { headers: { 'content-type': IMAGE_MIME[ext] || 'application/octet-stream', 'x-content-type-options': 'nosniff', 'content-security-policy': "default-src 'none'" } });
       } catch { return new Response('Not found', { status: 404 }); }
     }
+    // Original PDFs of course materials, for the side viewer (Chromium's PDF viewer).
+    const mat = /^\/materials\/([^/]+)\.pdf$/.exec(rel);
+    if (mat) {
+      try {
+        const body = await fsp.readFile(path.join(dataDir(), 'materials', `${assertId(mat[1])}.pdf`));
+        return new Response(body, { headers: { 'content-type': 'application/pdf', 'x-content-type-options': 'nosniff' } });
+      } catch { return new Response('Not found', { status: 404 }); }
+    }
     if (rel === '/') rel = '/index.html';
     const file = path.normalize(path.join(RENDERER, rel));
     if (!file.startsWith(RENDERER + path.sep)) return new Response('Forbidden', { status: 403 });
@@ -107,6 +115,7 @@ function createWindow(viewNoteId = null) {
       nodeIntegration: false,
       webSecurity: true,
       spellcheck: true,
+      plugins: true, // built-in PDF viewer for course materials
       // Keep timers and recording running at full speed while the student has
       // another app in front during a lecture.
       backgroundThrottling: false,
@@ -470,12 +479,15 @@ function registerIpc() {
       const chunks = await materials.extract(file);
       const id = assertId(ids[i]);
       await fsp.writeFile(matFile(id), JSON.stringify(chunks));
-      out.push({ id, name: path.basename(file), chars: chunks.reduce((n, c) => n + c.text.length, 0), parts: chunks.length });
+      // Keep the original PDF so it can be viewed beside the notes; other formats are shown as text.
+      const ext = path.extname(file).slice(1).toLowerCase();
+      if (ext === 'pdf') await fsp.copyFile(file, path.join(matDir(), `${id}.pdf`));
+      out.push({ id, ext, name: path.basename(file), chars: chunks.reduce((n, c) => n + c.text.length, 0), parts: chunks.length });
     }
     return out;
   });
   handle('materials:load', async (_e, id) => JSON.parse(await fsp.readFile(matFile(id), 'utf8')));
-  handle('materials:remove', (_e, id) => fsp.rm(matFile(id), { force: true }));
+  handle('materials:remove', async (_e, id) => { await fsp.rm(matFile(id), { force: true }); await fsp.rm(path.join(matDir(), `${assertId(id)}.pdf`), { force: true }); });
   handle('syllabus:read', async () => {
     const [file] = await pickDocs('Choose your syllabus', false);
     if (!file) return null;
