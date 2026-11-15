@@ -12,7 +12,7 @@ import { createEditor, sanitizeHtml } from './editor.js';
 import { recorder, Player, transcription, transcribeNote, cancelTranscription, computeSilence } from './audio.js';
 import { runAI, cancelAI, job, isRunning, aiReady, clearJob } from './ai.js';
 import { fmtTime, parseTime, uid, todayStr, extractJson, normalizeCards, normalizeQuiz, newCardSchedule } from './lib/util.js';
-import { buildContext, summaryPrompt, askPrompt, flashcardPrompt, quizPrompt, practicePrompt, visualPrompt, parseVisual } from './lib/prompts.js';
+import { MAX_CONTEXT_CHARS, chunkTranscript, partNotesPrompt, mergeNotesPrompt, buildContext, summaryPrompt, askPrompt, flashcardPrompt, quizPrompt, practicePrompt, visualPrompt, parseVisual } from './lib/prompts.js';
 import { sourcesFor, courseMaterials } from './materials.js';
 import { separator, togglePane } from './layout.js';
 
@@ -869,13 +869,14 @@ async function contextFor(note, extra = '') {
   const transcript = note.speakers ? note.transcript.map((s) => ({ ...s, text: s.spk != null ? `${note.speakers[s.spk]}: ${s.text}` : s.text })) : note.transcript;
   // A master note studies its source lectures' recordings too, one untimed block per lecture.
   const masterSrc = note.master ? (note.master.sources || []).map((id) => S.notes[id]).filter((n) => n && n.transcript && n.transcript.length) : [];
-  if (masterSrc.length) transcript.push(...masterSrc.map((n) => ({ s: 0, e: 0, text: `(Lecture: ${n.title || 'Untitled'})\n${n.transcript.map((x) => x.text).join(' ')}` })));
+  // One entry per segment (not one per lecture) so a long lecture can still be split into chunks.
+  for (const n of masterSrc) transcript.push(...n.transcript.map((x, j) => ({ s: 0, e: 0, text: j ? x.text : `(Lecture: ${n.title || 'Untitled'}) ${x.text}` })));
   const query = `${extra} ${extra} ${note.title} ${note.text} ${note.transcript.slice(0, 400).map((s) => s.text).join(' ')}`;
   const sources = note.courseId ? await sourcesFor(note.courseId, query) : [];
   const built = buildContext({ title: note.title, course: course ? courseLabel(course) : '', lines, transcript, sources });
   built.empty = built.empty && !sources.length;
   const hasTimes = !note.master && (note.transcript.length > 0 || lines.some((l) => l.t !== null));
-  return { built, hasTimes };
+  return { built, hasTimes, inputs: { title: note.title, course: course ? courseLabel(course) : '', lines, transcript, sources } };
 }
 
 function aiGate(what) {
@@ -1018,12 +1019,27 @@ function renderTranscript() {
 async function generateSummary() {
   const c = ctx;
   const { note } = c;
-  const { built, hasTimes } = await contextFor(note);
+  const { built, hasTimes, inputs } = await contextFor(note);
   if (built.empty) { toast('Type some notes or transcribe the recording first.'); return; }
   const key = `summary:${note.id}`;
+  const opts = { today: todayStr(), hasTimes, master: note.master || null };
   try {
-    const text = await runAI(key, summaryPrompt(built, { today: todayStr(), hasTimes, master: note.master || null }));
-    note.summary = { markdown: text, created: Date.now(), truncated: built.truncated };
+    let text;
+    if (!built.truncated) text = await runAI(key, summaryPrompt(built, opts));
+    else {
+      // Too long for one request: write notes on each slice of the transcript, then merge them.
+      // shortcut: typed notes + course extracts are resent with every slice; if those alone fill the budget, slices get small and slow.
+      const budget = Math.max(40000, MAX_CONTEXT_CHARS - built.text.indexOf('<transcript>') - 2000);
+      const chunks = chunkTranscript(inputs.transcript, budget);
+      const parts = [];
+      for (const [i, chunk] of chunks.entries()) {
+        toast(`Long material: writing part ${i + 1} of ${chunks.length}…`);
+        parts.push(await runAI(key, partNotesPrompt(buildContext({ ...inputs, transcript: chunk }), { ...opts, i: i + 1, n: chunks.length })));
+      }
+      toast('Combining the parts…');
+      text = await runAI(key, mergeNotesPrompt(parts, { ...opts, title: note.title }));
+    }
+    note.summary = { markdown: text, created: Date.now(), truncated: false };
     note.updated = Date.now();
     saveNote(note.id, { now: true });
     clearJob(key);

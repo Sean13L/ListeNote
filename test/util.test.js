@@ -285,3 +285,13 @@ test('summaryPrompt writes class notes, and exam study notes for a master note',
   assert.match(m, /Midterm on 2026-12-01/);
   assert.match(m, /## Practice questions[\s\S]*## To-do/);
 });
+
+test('long material is split into chunks and merged', async () => {
+  const { chunkTranscript, mergeNotesPrompt } = await load('prompts.js');
+  const tr = Array.from({ length: 1000 }, (_, i) => ({ s: i, e: i + 1, text: 'x'.repeat(88) }));
+  const chunks = chunkTranscript(tr, 10000);
+  assert.equal(chunks.flat().length, 1000);
+  assert.ok(chunks.length >= 10 && chunks.every((c) => c.length * 100 <= 10000));
+  const m = mergeNotesPrompt(['A notes', 'B notes'], { title: 'Bio', today: '2026-11-14', hasTimes: true });
+  assert.match(m, /part 1 of 2:\nA notes[\s\S]*part 2 of 2:\nB notes[\s\S]*## To-do/);
+});

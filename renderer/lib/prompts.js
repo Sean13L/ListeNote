@@ -2,7 +2,7 @@
 
 import { fmtTime } from './util.js';
 
-const MAX_CONTEXT_CHARS = 180000;
+export const MAX_CONTEXT_CHARS = 180000;
 
 export const SYSTEM = [
   'You are the study assistant built into ListeNote, a lecture note-taking app for students.',
@@ -52,6 +52,39 @@ const NOTE_STYLE = `Write it the way a strong student takes class notes, not as 
 - Bold each **key term** where it is first defined, with its definition right there.
 - Keep bullets short and scannable. Include worked examples, numbers and formulas exactly; use \`code\` for formulas if helpful.
 - Mark anything the lecturer stressed or hinted will be tested with "**(Exam)**".`;
+
+// Split a transcript into runs whose formatted text stays under `budget` characters.
+export function chunkTranscript(transcript, budget) {
+  const chunks = [[]];
+  let size = 0;
+  for (const seg of transcript) {
+    const len = seg.text.length + 12;
+    if (size + len > budget && chunks[chunks.length - 1].length) { chunks.push([]); size = 0; }
+    chunks[chunks.length - 1].push(seg);
+    size += len;
+  }
+  return chunks;
+}
+
+// Notes on one slice of material that is too long to send at once; merged afterwards by mergeNotesPrompt.
+export function partNotesPrompt(ctx, { today, hasTimes, i, n }) {
+  return `${ctx.text}
+
+Today's date is ${today}.
+
+The transcript above is part ${i} of ${n} of material too long to process at once. Write detailed notes on everything in THIS part of the transcript (use the student's notes only to help understand it). Another step will merge all parts, so do not summarise away detail.
+
+${NOTE_STYLE}
+- ${tsRule(hasTimes)}
+
+${TODO_SECTION(today)}`;
+}
+
+export function mergeNotesPrompt(parts, { title, today, hasTimes, master = null }) {
+  const material = parts.map((p, i) => `<material>\nNotes on part ${i + 1} of ${parts.length}:\n${p}\n</material>`).join('\n\n');
+  const ctx = { text: `Title: ${title || 'Untitled'}\n\nThe material was too long to read at once, so notes were written on each part in order. Combine them into ONE final result as instructed below: merge repeated topics, keep all detail, examples, formulas and citations, and keep timestamps exactly as they appear.\n\n${material}` };
+  return summaryPrompt(ctx, { today, hasTimes, master });
+}
 
 export function summaryPrompt(ctx, { today, hasTimes, master = null }) {
   if (master) {
