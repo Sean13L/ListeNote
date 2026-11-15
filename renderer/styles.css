@@ -164,7 +164,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--accent-bg); wi
 /* -------------------------------------------------------------- sidebar --- */
 .brand { display: flex; align-items: center; gap: 8px; padding: 14px 16px 6px; -webkit-app-region: drag; user-select: none; }
 body.mac .brand { padding-top: 44px; }
-.brand-mark { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 7px; background: var(--record); color: #fff; }
+.brand-mark { display: grid; place-items: center; width: 24px; height: 24px; color: var(--ink); }
 .brand-name { font: 600 17px var(--serif); letter-spacing: .1px; }
 .sidebar-top { padding: 8px 12px 10px; display: flex; flex-direction: column; gap: 8px; }
 .search-wrap { position: relative; color: var(--muted); }
@@ -467,9 +467,23 @@ body.resizing iframe, body.resizing audio { pointer-events: none; }
 .side-toggle { -webkit-app-region: no-drag; width: 28px; height: 28px; }
 .hide-side { margin-left: auto; transform: scaleX(-1); }
 .show-side { display: none; position: absolute; top: 10px; left: 10px; z-index: 30; }
-body.mac .show-side { left: 80px; top: 8px; }
+/* Far left, just below the macOS window buttons. */
+body.mac .show-side { left: 8px; top: 36px; }
 :root.side-hidden .show-side { display: inline-grid; }
-:root.side-hidden body.mac .list-head { padding-left: 116px; }
+:root.side-hidden body.mac .list-head { padding-left: 84px; }
 :root.side-hidden body:not(.mac) .list-head { padding-left: 46px; }
 #app.viewer .show-side { display: none !important; }
 :root.side-hidden.list-hidden body:not(.mac) .note-head, :root.side-hidden body:not(.mac) #app.no-list .page { padding-left: 52px; }
+
+/* Study panel: › at its top right hides it; ‹ near the window's top right brings it back. */
+.tabs-row { display: flex; align-items: flex-end; border-bottom: 1px solid var(--line); }
+.tabs-row .tabs { flex: 1; min-width: 0; border-bottom: 0; }
+.hide-panel { margin: 0 6px 6px 0; flex: none; }
+.show-panel { display: none; position: absolute; top: 6px; right: 10px; z-index: 30; }
+:root.panel-hidden .show-panel { display: inline-grid; }
+.tabs-row .tabs { gap: 0; padding: 6px 4px 0 8px; }
+.tabs-row .tab { padding-left: 7px; padding-right: 7px; }
+.hide-panel { margin: 0 4px 6px 0; }
+.show-panel { transform: scaleX(-1); }
+.model-row { margin-top: 6px; justify-content: space-between; } .model-row small { color: var(--muted); font-size: 12.5px; }
+.connect-status { display: block; font-size: 12.5px; color: var(--ink); margin-top: 2px; } .connect-status:empty { display: none; } .connect-status .btn { margin-left: 4px; }

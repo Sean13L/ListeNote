@@ -16,14 +16,15 @@ const path = require('node:path');
 const TIMEOUT_MS = 10 * 60 * 1000;
 const MAX_OUTPUT = 4 * 1024 * 1024;
 
-const EFFORTS = new Set(['low', 'medium', 'high', 'xhigh', 'max']);
+// Reasoning levels Claude Code (--effort) and Codex (model_reasoning_effort) accept.
+const EFFORTS = new Set(['minimal', 'low', 'medium', 'high', 'xhigh', 'max', 'ultra']);
 
 const PROVIDERS = {
   claude: {
     label: 'Claude Code',
     bin: 'claude',
     install: 'https://claude.com/claude-code',
-    modelHint: 'e.g. sonnet, opus, haiku (blank = your default)',
+    modelHint: '',
     tested: true,
     build({ system, model, effort }) {
       const args = [
@@ -38,7 +39,7 @@ const PROVIDERS = {
         '--verbose',
         '--include-partial-messages',
       ];
-      if (model) args.push('--model', model);
+      if (model && model !== 'default') args.push('--model', model);
       if (effort) args.push('--effort', effort);
       return { args, stdin: (prompt) => prompt, parser: 'claude-stream' };
     },
@@ -48,10 +49,11 @@ const PROVIDERS = {
     bin: 'codex',
     install: 'https://developers.openai.com/codex/cli',
     modelHint: 'blank = your default',
-    tested: false,
-    build({ system, model, outFile }) {
+    tested: true,
+    build({ system, model, effort, outFile }) {
       const args = ['exec', '--skip-git-repo-check', '--sandbox', 'read-only', '--ephemeral', '-o', outFile];
       if (model) args.push('-m', model);
+      if (effort) args.push('--config', `model_reasoning_effort="${effort}"`);
       args.push('-');
       return { args, stdin: (prompt) => `${system}\n\n${prompt}`, parser: 'file' };
     },
@@ -152,6 +154,169 @@ async function isExecutable(file) {
     await fsp.access(file, fs.constants.X_OK);
     return (await fsp.stat(file)).isFile();
   } catch { return false; }
+}
+
+// ----------------------------------------------------------- models ---
+// Ask the installed tool which models it offers, so Settings shows the
+// account's real list. Claude Code reports it (names, descriptions, effort
+// levels) in reply to the "initialize" request of its programmatic mode;
+// Ollama lists the models downloaded on this computer. Others: null.
+
+const modelCache = new Map();
+
+function childEnv(pathValue) {
+  const env = { ...process.env, PATH: pathValue, NO_COLOR: '1' };
+  delete env.CLAUDECODE;
+  delete env.CLAUDE_CODE_ENTRYPOINT;
+  return env;
+}
+
+async function claudeModels(bin, workDir) {
+  await fsp.mkdir(workDir, { recursive: true });
+  const env = childEnv(await resolvePath());
+  return new Promise((resolve, reject) => {
+    const child = spawn(bin, ['-p', '--input-format', 'stream-json', '--output-format', 'stream-json', '--verbose',
+      '--tools', '', '--strict-mcp-config', '--setting-sources', '', '--no-session-persistence'], { cwd: workDir, env, stdio: ['pipe', 'pipe', 'ignore'], windowsHide: true });
+    let buf = '';
+    const done = (err, value) => { clearTimeout(timer); child.kill(); if (err) reject(err); else resolve(value); };
+    const timer = setTimeout(() => done(new Error('Claude Code did not answer in time.')), 30000);
+    child.on('error', (err) => done(err));
+    child.stdout.setEncoding('utf8');
+    child.stdout.on('data', (chunk) => {
+      buf += chunk;
+      let i;
+      while ((i = buf.indexOf('\n')) >= 0) {
+        const line = buf.slice(0, i);
+        buf = buf.slice(i + 1);
+        let msg;
+        try { msg = JSON.parse(line); } catch { continue; }
+        if (msg.type !== 'control_response') continue;
+        const r = (msg.response && (msg.response.response || msg.response)) || {};
+        if (!Array.isArray(r.models) || !r.models.length) return done(new Error('Claude Code did not list any models.'));
+        return done(null, r.models.filter((m) => m && typeof m.value === 'string').map((m) => ({
+          value: m.value.slice(0, 100),
+          label: String(m.displayName || m.value).slice(0, 80),
+          description: String(m.description || '').slice(0, 160),
+          efforts: Array.isArray(m.supportedEffortLevels) ? m.supportedEffortLevels.filter((e) => EFFORTS.has(e)) : [],
+        })));
+      }
+    });
+    child.stdin.on('error', () => {});
+    // Keep stdin open: closing it ends the session before the reply arrives.
+    child.stdin.write(`${JSON.stringify({ type: 'control_request', request_id: 'models', request: { subtype: 'initialize' } })}\n`);
+  });
+}
+
+// Codex lists its models over its app server (JSON-RPC on stdin/stdout).
+async function codexModels(bin, workDir) {
+  await fsp.mkdir(workDir, { recursive: true });
+  const env = childEnv(await resolvePath());
+  return new Promise((resolve, reject) => {
+    const child = spawn(bin, ['app-server'], { cwd: workDir, env, stdio: ['pipe', 'pipe', 'ignore'], windowsHide: true });
+    const send = (m) => child.stdin.write(`${JSON.stringify(m)}\n`);
+    let buf = '';
+    const done = (err, value) => { clearTimeout(timer); child.kill(); if (err) reject(err); else resolve(value); };
+    const timer = setTimeout(() => done(new Error('Codex did not answer in time.')), 30000);
+    child.on('error', (err) => done(err));
+    child.stdin.on('error', () => {});
+    child.stdout.setEncoding('utf8');
+    child.stdout.on('data', (chunk) => {
+      buf += chunk;
+      let i;
+      while ((i = buf.indexOf('\n')) >= 0) {
+        const line = buf.slice(0, i);
+        buf = buf.slice(i + 1);
+        let msg;
+        try { msg = JSON.parse(line); } catch { continue; }
+        if (msg.id === 0) {
+          if (msg.error) return done(new Error(msg.error.message || 'Codex would not start.'));
+          send({ method: 'initialized' });
+          send({ method: 'model/list', id: 1, params: {} });
+        } else if (msg.id === 1) {
+          if (msg.error) return done(new Error(msg.error.message || 'Codex could not list its models. Are you signed in?'));
+          const list = ((msg.result && msg.result.data) || []).filter((m) => m && !m.hidden && typeof (m.model || m.id) === 'string')
+            .sort((a, b) => Number(!!b.isDefault) - Number(!!a.isDefault))
+            .map((m) => ({
+              value: String(m.model || m.id).slice(0, 100),
+              label: `${String(m.displayName || m.model).slice(0, 80)}${m.isDefault ? ' (default)' : ''}`,
+              description: String(m.description || '').slice(0, 160),
+              efforts: (m.supportedReasoningEfforts || []).map((e) => e && e.reasoningEffort).filter((e) => EFFORTS.has(e)),
+            }));
+          return done(null, list);
+        }
+      }
+    });
+    send({ method: 'initialize', id: 0, params: { clientInfo: { name: 'listenote', title: 'ListeNote', version: '0.1' } } });
+  });
+}
+
+async function ollamaModels(bin) {
+  const env = childEnv(await resolvePath());
+  return new Promise((resolve, reject) => {
+    execFile(bin, ['list'], { env, timeout: 15000, encoding: 'utf8' }, (err, stdout) => {
+      if (err) return reject(new Error('Ollama did not answer. Is it running?'));
+      resolve(stdout.split('\n').slice(1).map((l) => l.trim().split(/\s+/)[0]).filter(Boolean)
+        .map((name) => ({ value: name, label: name, description: '', efforts: [] })));
+    });
+  });
+}
+
+async function listModels(provider, { refresh = false, workDir } = {}) {
+  if (!['claude', 'codex', 'ollama'].includes(provider)) return null;
+  if (!refresh && modelCache.has(provider)) return modelCache.get(provider);
+  const bin = await which(PROVIDERS[provider].bin);
+  if (!bin) throw new Error(`${PROVIDERS[provider].label} is not installed.`);
+  const models = provider === 'claude' ? await claudeModels(bin, workDir) : provider === 'codex' ? await codexModels(bin, workDir) : await ollamaModels(bin);
+  modelCache.set(provider, models);
+  return models;
+}
+
+// ------------------------------------------------------------ sign-in ---
+// Whether the tool is signed in. Only a yes/no and a short label leave this
+// function (never the account's email or organisation).
+
+function runQuiet(bin, args) {
+  return resolvePath().then((p) => new Promise((resolve) => {
+    execFile(bin, args, { env: childEnv(p), timeout: 20000, encoding: 'utf8' }, (err, stdout, stderr) => resolve({ ok: !err, out: `${stdout || ''}${stderr || ''}` }));
+  }));
+}
+
+async function authStatus(provider) {
+  const def = PROVIDERS[provider];
+  if (!def || !def.bin) return { signedIn: null, detail: '' };
+  const bin = await which(def.bin);
+  if (!bin) return { installed: false, signedIn: false, detail: `${def.label} is not installed.` };
+  if (provider === 'claude') {
+    const r = await runQuiet(bin, ['auth', 'status', '--json']);
+    let s = {};
+    try { s = JSON.parse(r.out.slice(r.out.indexOf('{'))); } catch { /* not JSON: treat as signed out */ }
+    return { installed: true, signedIn: !!s.loggedIn, detail: s.loggedIn ? (s.authMethod === 'claude.ai' ? 'Signed in with your Claude subscription' : 'Signed in') : 'Not signed in' };
+  }
+  if (provider === 'codex') {
+    const r = await runQuiet(bin, ['login', 'status']);
+    const yes = r.ok && /logged in/i.test(r.out) && !/not logged in/i.test(r.out);
+    return { installed: true, signedIn: yes, detail: yes ? (/chatgpt/i.test(r.out) ? 'Signed in with ChatGPT' : 'Signed in') : 'Not signed in' };
+  }
+  if (provider === 'ollama') {
+    const r = await runQuiet(bin, ['list']);
+    return { installed: true, signedIn: r.ok, detail: r.ok ? 'Ollama is running' : 'Ollama is not running. Open the Ollama app.' };
+  }
+  return { installed: true, signedIn: null, detail: '' };
+}
+
+// Open the tool's own sign-in in Terminal (it finishes in the browser). The
+// command is fixed per tool; nothing from the page is put into it.
+const SIGN_IN = { claude: ['auth', 'login'], codex: ['login'], gemini: [] };
+async function openSignIn(provider) {
+  const def = PROVIDERS[provider];
+  if (!def || !SIGN_IN[provider]) throw new Error('This AI has no sign-in step.');
+  const bin = await which(def.bin);
+  if (!bin) throw new Error(`${def.label} is not installed.`);
+  const command = [bin, ...SIGN_IN[provider]].map((a) => `'${a.replace(/'/g, "'\\''")}'`).join(' ');
+  if (process.platform !== 'darwin') return { manual: [def.bin, ...SIGN_IN[provider]].join(' ') };
+  const script = `tell application "Terminal"\nactivate\ndo script "${command.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"\nend tell`;
+  await new Promise((resolve, reject) => execFile('osascript', ['-e', script], { timeout: 15000 }, (err) => (err ? reject(new Error('Could not open Terminal.')) : resolve())));
+  return { manual: null };
 }
 
 async function detect() {
@@ -287,4 +452,4 @@ function cancelAll() {
   for (const child of running.values()) if (child.cancel) child.cancel();
 }
 
-module.exports = { detect, run, cancel, cancelAll, splitCommand, which, resolvePathSync, PROVIDERS };
+module.exports = { detect, listModels, authStatus, openSignIn, run, cancel, cancelAll, splitCommand, which, resolvePathSync, PROVIDERS };

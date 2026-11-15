@@ -27,13 +27,50 @@ export async function mountSettings(container) {
 
   // ---- AI ----
   const modelInput = h('input', { type: 'text', class: 'input', value: st.model, autocomplete: 'off', spellcheck: false, onChange: () => set('model', modelInput.value.trim()) });
-  // Suggestions only; any model name can still be typed.
-  const modelList = h('datalist', { id: 'model-options' }, ['claude-haiku-5-5', 'claude-sonnet-5-5', 'claude-opus-5-5', 'haiku', 'sonnet', 'opus'].map((m) => h('option', { value: m })));
-  modelInput.setAttribute('list', 'model-options');
-  const effortSelect = h('select', { class: 'input', onChange: () => set('effort', effortSelect.value) },
-    [['', 'Default'], ['low', 'Low (fastest)'], ['medium', 'Medium'], ['high', 'High'], ['xhigh', 'Extra high'], ['max', 'Max (slowest)']]
+  // The model list comes from the chosen tool itself (Claude Code, Ollama).
+  // Tools that cannot list their models get a text box instead.
+  let models = null;
+  const modelSelect = h('select', { class: 'input', id: 'set-model-list', onChange: () => { set('model', modelSelect.value); syncEffort(); } });
+  const modelStatus = h('small', { role: 'status' });
+  const refreshBtn = button('Refresh list', () => loadModels(true), { kind: 'small' });
+  const EFFORT_LABELS = { minimal: 'Minimal (fastest)', low: 'Low', medium: 'Medium', high: 'High', xhigh: 'Extra high', max: 'Max', ultra: 'Ultra (slowest)' };
+  const effortSelect = h('select', { class: 'input', onChange: () => set('effort', effortSelect.value) });
+  // Effort levels offered depend on the chosen model.
+  const syncEffort = () => {
+    const m = models && models.find((x) => x.value === st.model);
+    const levels = m ? m.efforts : [];
+    effortField.hidden = !['claude', 'codex'].includes(st.provider) || !levels.length;
+    if (st.effort && !levels.includes(st.effort)) set('effort', '');
+    effortSelect.replaceChildren(...[['', 'Default'], ...levels.map((e) => [e, EFFORT_LABELS[e] || e])]
       .map(([v, l]) => h('option', { value: v, selected: st.effort === v, text: l })));
-  const effortField = field('Effort', effortSelect, 'How hard Claude thinks. Higher is slower and uses more of your plan.');
+  };
+  let loadToken = 0;
+  async function loadModels(refresh = false) {
+    const token = ++loadToken;
+    const provider = st.provider;
+    models = null;
+    syncProvider();
+    const info = S.providers.find((x) => x.id === provider);
+    if (!['claude', 'codex', 'ollama'].includes(provider) || !info || !info.available) return;
+    modelSelect.disabled = true;
+    modelSelect.replaceChildren(h('option', { text: 'Loading models…' }));
+    modelStatus.textContent = `Reading the model list from ${info.label}…`;
+    try {
+      const list = await api.llmModels(provider, refresh);
+      if (token !== loadToken || !page.isConnected) return;
+      if (!list || !list.length) throw new Error(provider === 'ollama' ? 'No models are downloaded yet. Run "ollama pull llama3.2" in a terminal, then refresh.' : 'No models were listed.');
+      models = list;
+      if (!list.some((m) => m.value === st.model)) set('model', list[0].value);
+      modelSelect.replaceChildren(...list.map((m) => h('option', { value: m.value, selected: m.value === st.model, text: m.description ? `${m.label} · ${m.description}` : m.label })));
+      modelStatus.textContent = `${list.length} model${list.length === 1 ? '' : 's'} available from ${info.label}.`;
+    } catch (err) {
+      if (token !== loadToken) return;
+      modelStatus.textContent = `Could not read the model list: ${errorMessage(err)}`;
+    }
+    modelSelect.disabled = false;
+    syncProvider();
+  }
+  const effortField = field('Effort', effortSelect, 'How hard the model thinks. Higher is slower and uses more of your plan.');
   const modelHint = h('small');
   const customInput = h('input', { type: 'text', class: 'input', value: st.customCommand, autocomplete: 'off', spellcheck: false, placeholder: 'llm -m my-model', onChange: () => set('customCommand', customInput.value.trim()) });
   const customField = h('div', { class: 'field' }, h('label', { for: 'set-custom', text: 'Command' }), customInput, h('small', { text: 'Any program that reads a prompt on standard input and prints the answer. It is run directly, not through a shell.' }));
@@ -57,20 +94,82 @@ export async function mountSettings(container) {
     modelHint.textContent = p ? p.modelHint : '';
     customField.hidden = st.provider !== 'custom';
     modelInput.closest('.field').hidden = st.provider === 'custom';
-    modelInput.setAttribute('list', st.provider === 'claude' ? 'model-options' : '');
-    effortField.hidden = st.provider !== 'claude';
+    const listed = !!models;
+    const canList = ['claude', 'codex', 'ollama'].includes(st.provider) && p && p.available;
+    modelSelect.hidden = !canList || (!listed && !modelSelect.disabled);
+    modelInput.hidden = !modelSelect.hidden;
+    refreshBtn.hidden = !canList;
+    modelStatus.hidden = !canList;
+    modelLabel.htmlFor = modelSelect.hidden ? 'set-model' : 'set-model-list';
+    modelLabel.textContent = !modelSelect.hidden || (p && p.needsModel) ? 'Model' : 'Model (leave blank for your default)';
+    modelHint.hidden = !modelSelect.hidden;
+    syncEffort();
   };
+
+  // Connect: check the tool is signed in (open its sign-in if not), select it,
+  // and read its models.
+  const connectState = new Map(); // provider id -> status element
+  let signInPoll = null;
+  async function connect(p) {
+    const out = connectState.get(p.id);
+    clearInterval(signInPoll);
+    for (const [id, el] of connectState) if (id !== p.id) el.textContent = '';
+    out.textContent = 'Checking sign-in…';
+    try {
+      const a = await api.llmAuth(p.id);
+      if (a.installed === false) { out.textContent = `${a.detail} Use "How to install", then press Connect again.`; return; }
+      if (a.signedIn === false) {
+        out.replaceChildren(document.createTextNode(`${a.detail}. `), button('Sign in', () => signIn(p), { kind: 'small' }));
+        return;
+      }
+      out.textContent = a.detail ? `${a.detail}. Finding models…` : 'Finding models…';
+      if (st.provider !== p.id) {
+        st.model = p.id === 'claude' ? 'default' : '';
+        modelInput.value = '';
+        set('provider', p.id);
+        const radio = page.querySelector(`input[name=provider][value="${p.id}"]`);
+        if (radio) radio.checked = true;
+      }
+      await loadModels(true);
+      out.textContent = models ? `Connected. ${models.length} model${models.length === 1 ? '' : 's'} found.` : `Connected. ${p.label} cannot list its models, so type one below if you want a specific model.`;
+    } catch (err) { out.textContent = `Could not connect: ${errorMessage(err)}`; }
+  }
+  async function signIn(p) {
+    const out = connectState.get(p.id);
+    try {
+      const r = await api.llmSignIn(p.id);
+      out.textContent = r.manual ? `Open a terminal and run: ${r.manual}. Then press Connect again.` : 'Finish signing in in the Terminal window and your browser. ListeNote will continue when you are signed in.';
+      if (r.manual) return;
+      const started = Date.now();
+      signInPoll = setInterval(async () => {
+        if (!page.isConnected || Date.now() - started > 10 * 60000) { clearInterval(signInPoll); return; }
+        const a = await api.llmAuth(p.id).catch(() => null);
+        if (a && a.signedIn) { clearInterval(signInPoll); connect(p); }
+      }, 3000);
+    } catch (err) { out.textContent = errorMessage(err); }
+  }
 
   const providerList = h('div', { class: 'provider-list', role: 'radiogroup', 'aria-label': 'AI to use' }, S.providers.map((p) => {
     const status = p.id === 'custom' ? 'Your own command' : p.available ? 'Installed' : 'Not installed';
+    const out = h('span', { class: 'connect-status', role: 'status' });
+    connectState.set(p.id, out);
     return h('label', { class: `provider ${p.available ? '' : 'missing'}` },
-      h('input', { type: 'radio', name: 'provider', value: p.id, checked: st.provider === p.id, onChange: () => { set('provider', p.id); syncProvider(); } }),
+      h('input', { type: 'radio', name: 'provider', value: p.id, checked: st.provider === p.id, onChange: () => {
+        // Model names belong to one tool; start each tool on its own default.
+        st.model = p.id === 'claude' ? 'default' : '';
+        modelInput.value = '';
+        set('provider', p.id);
+        loadModels();
+      } }),
       h('span', { class: 'provider-main' },
         h('strong', { text: p.label }),
-        h('span', { class: `status ${p.available && p.id !== 'custom' ? 'ok' : ''}`, text: status + (p.tested || p.id === 'custom' ? '' : ' · not yet tested by the developers on this setup') })),
-      !p.available && p.install ? h('a', { href: p.install, target: '_blank', rel: 'noreferrer', text: 'How to install' }) : null);
+        h('span', { class: `status ${p.available && p.id !== 'custom' ? 'ok' : ''}`, text: status + (p.tested || p.id === 'custom' ? '' : ' · not yet tested by the developers on this setup') }),
+        out),
+      !p.available && p.install ? h('a', { href: p.install, target: '_blank', rel: 'noreferrer', text: 'How to install' }) : null,
+      p.id !== 'custom' ? button('Connect', (e) => { e.preventDefault(); connect(p); }, { kind: 'small' }) : null);
   }));
-  const modelField = h('div', { class: 'field' }, h('label', { for: 'set-model', text: 'Model (optional)' }), modelInput, modelList, modelHint);
+  const modelLabel = h('label', { for: 'set-model', text: 'Model' });
+  const modelField = h('div', { class: 'field' }, modelLabel, modelSelect, modelInput, modelHint, h('div', { class: 'row model-row' }, modelStatus, refreshBtn));
   modelInput.id = 'set-model';
 
   // ---- transcription ----
@@ -105,7 +204,7 @@ export async function mountSettings(container) {
     h('header', { class: 'page-head' }, h('div', null, h('h1', { text: 'Settings' }))),
 
     section('AI for summaries, questions, flashcards and quizzes',
-      'ListeNote does not include an AI or need an API key. It runs a command-line tool you have already installed and signed in to, using your existing subscription.',
+      'ListeNote does not include an AI or need an API key. It uses a command-line AI tool on this computer with your existing subscription. Press Connect next to yours: ListeNote checks you are signed in (and opens the sign-in if not), then finds the models your account can use.',
       providerList, modelField, effortField, customField,
       h('div', { class: 'row' }, testBtn, testOut)),
 
@@ -150,5 +249,5 @@ export async function mountSettings(container) {
 
     h('p', { class: 'footnote', text: `ListeNote ${info.version}` }),
   );
-  syncProvider();
+  loadModels();
 }

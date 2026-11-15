@@ -1,7 +1,7 @@
 {
   "name": "listenote",
   "productName": "ListeNote",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Record lectures, type timestamped notes, and study from them with the AI subscription you already have. Runs locally.",
   "main": "main/main.js",
   "license": "MIT",
@@ -19,7 +19,8 @@
       "main/**",
       "renderer/**",
       "shared/**",
-      "package.json"
+      "package.json",
+      "!build/**"
     ],
     "asarUnpack": [
       "node_modules/onnxruntime-node/**",
@@ -47,7 +48,8 @@
         "AppImage"
       ],
       "category": "Education"
-    }
+    },
+    "icon": "build/icon.png"
   },
   "dependencies": {
     "@huggingface/transformers": "^4.3.2",

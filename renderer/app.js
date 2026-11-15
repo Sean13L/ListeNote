@@ -374,7 +374,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) flush
       return;
     }
     buildSidebar();
-    $app.append(separator('side'), separator('list'),
+    $app.append(separator('side', { tab: false }), separator('list'),
       // Shown at the top left only while the sidebar is hidden.
       iconButton('chevron', 'Show sidebar', () => togglePane('side'), { class: 'side-toggle show-side', size: 16 }));
     applyLayout();

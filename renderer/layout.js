@@ -33,7 +33,8 @@ export function applyLayout() {
   for (const sep of separators) {
     const k = sep.dataset.pane;
     sep.setAttribute('aria-valuenow', String(L[`${k}Hidden`] ? 0 : L[k]));
-    sep.querySelector('.sep-expand').hidden = !L[`${k}Hidden`];
+    const tab = sep.querySelector('.sep-expand');
+    if (tab) tab.hidden = !L[`${k}Hidden`];
   }
 }
 
@@ -46,7 +47,9 @@ export function togglePane(k) {
 
 // A divider for pane `k`. `fromRight` is true when the pane sits to the right of
 // the divider (the study panel), so dragging left makes it wider.
-export function separator(k, { fromRight = false } = {}) {
+// `tab`: show a small expand tab on the divider while the pane is hidden (off
+// for panes that have their own show arrow at the top).
+export function separator(k, { fromRight = false, tab = true } = {}) {
   const p = PANES[k];
   const expand = h('button', { type: 'button', class: 'sep-expand', tabindex: '-1', 'aria-hidden': 'true', title: `Show ${p.label}`, onClick: () => togglePane(k) },
     icon('chevron', 14));
@@ -54,7 +57,7 @@ export function separator(k, { fromRight = false } = {}) {
   const sep = h('div', {
     class: `sep sep-${k}`, role: 'separator', tabindex: '0', 'aria-orientation': 'vertical',
     'aria-label': `Resize ${p.label}. Enter to hide or show.`, 'aria-valuemin': '0', 'aria-valuemax': String(p.max), 'data-pane': k,
-  }, expand);
+  }, tab ? expand : null);
 
   const setWidth = (w, save) => {
     const L = state();

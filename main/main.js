@@ -390,6 +390,9 @@ function registerIpc() {
   });
 
   handle('llm:detect', () => llm.detect());
+  handle('llm:auth', (_e, provider) => llm.authStatus(String(provider)));
+  handle('llm:signin', (_e, provider) => llm.openSignIn(String(provider)));
+  handle('llm:models', (_e, provider, refresh) => llm.listModels(String(provider), { refresh: !!refresh, workDir: path.join(tmpDir(), 'ai') }));
   handle('llm:run', async (event, req) => {
     const id = assertId(req.id);
     return llm.run(

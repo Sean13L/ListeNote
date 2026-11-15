@@ -50,6 +50,9 @@ contextBridge.exposeInMainWorld('listenote', {
   exportPdf: invoke('export:pdf'),
 
   llmDetect: invoke('llm:detect'),
+  llmModels: invoke('llm:models'),
+  llmAuth: invoke('llm:auth'),
+  llmSignIn: invoke('llm:signin'),
   llmRun: invoke('llm:run'),
   llmCancel: invoke('llm:cancel'),
   onLlmDelta: (fn) => on('llm:delta', fn),

@@ -14,7 +14,7 @@ import { runAI, cancelAI, job, isRunning, aiReady, clearJob } from './ai.js';
 import { fmtTime, parseTime, uid, todayStr, extractJson, normalizeCards, normalizeQuiz, newCardSchedule } from './lib/util.js';
 import { buildContext, summaryPrompt, askPrompt, flashcardPrompt, quizPrompt, practicePrompt, visualPrompt, parseVisual } from './lib/prompts.js';
 import { sourcesFor, courseMaterials } from './materials.js';
-import { separator } from './layout.js';
+import { separator, togglePane } from './layout.js';
 
 const TABS = [
   { id: 'transcript', label: 'Transcript' },
@@ -128,10 +128,12 @@ export function mountNote(container, note, { viewer = false } = {}) {
     },
   }, t.label));
   c.panel = h('div', { class: 'panel-body', role: 'tabpanel', id: 'tabpanel', tabindex: '0' });
-  const side = h('aside', { class: 'panel', 'aria-label': 'Study tools' }, h('div', { class: 'tabs', role: 'tablist', 'aria-label': 'Study tools' }, c.tabButtons), c.panel);
+  const side = h('aside', { class: 'panel', 'aria-label': 'Study tools' }, h('div', { class: 'tabs-row' }, h('div', { class: 'tabs', role: 'tablist', 'aria-label': 'Study tools' }, c.tabButtons),
+    iconButton('chevron', 'Hide study panel', () => togglePane('panel'), { class: 'side-toggle hide-panel', size: 16 })), c.panel);
 
   c.transport = h('footer', { class: 'transport' });
-  container.append(h('div', { class: 'note' }, head, h('div', { class: 'note-body' }, editorPane, side, separator('panel', { fromRight: true })), c.transport));
+  container.append(h('div', { class: 'note' }, head, h('div', { class: 'note-body' }, editorPane, side, separator('panel', { fromRight: true, tab: false }),
+    iconButton('chevron', 'Show study panel', () => togglePane('panel'), { class: 'side-toggle show-panel', size: 16 })), c.transport));
 
   c.offs.push(
     bus.on('recording', () => { if (ctx === c) { renderRecordButton(); renderTransport(); } }),

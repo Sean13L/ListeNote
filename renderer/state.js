@@ -14,7 +14,7 @@ export const DEFAULT_SETTINGS = {
   theme: 'system',
   accent: 'indigo',
   provider: 'claude',
-  model: '',
+  model: 'default',
   effort: '',
   customCommand: '',
   whisperModel: 'base',
@@ -67,6 +67,8 @@ export async function loadState() {
   const { library, notes, recovered } = await api.loadAll();
   S.lib = { ...emptyLibrary(), ...(library || {}) };
   S.lib.settings = { ...DEFAULT_SETTINGS, ...(S.lib.settings || {}) };
+  // Claude always has a model chosen; "default" is Claude Code's recommended one.
+  if (S.lib.settings.provider === 'claude' && !S.lib.settings.model) S.lib.settings.model = 'default';
   for (const key of ['courses', 'assignments', 'cards', 'guides']) if (!Array.isArray(S.lib[key])) S.lib[key] = [];
   S.notes = notes || {};
   // Audio rescued from a recording that was cut short by a crash or quit.
