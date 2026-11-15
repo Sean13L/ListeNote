@@ -16,7 +16,7 @@ Record lectures, type notes that are linked to the recording, and study from the
 
 ## Install
 
-**Mac (Apple silicon):** download `ListeNote-0.1.0-arm64.dmg` from the [latest release](https://github.com/Sean13L/ListeNote/releases/latest), open it and drag ListeNote to Applications. The app is not notarized by Apple, so the first time, right-click it and choose **Open** (or allow it under System Settings → Privacy & Security).
+**Mac (Apple silicon):** download `ListeNote-0.1.1-arm64.dmg` from the [latest release](https://github.com/Sean13L/ListeNote/releases/latest), open it and drag ListeNote to Applications. The app is not notarized by Apple, so the first time, right-click it and choose **Open** (or allow it under System Settings → Privacy & Security).
 
 **From source** (macOS, Windows or Linux) requires [Node.js](https://nodejs.org) 22 or newer.
 
@@ -79,6 +79,8 @@ Recording a class can need permission. Rules differ by school and by region, and
 | Search | ⌘F / Ctrl+F |
 | Highlight | ⌘⇧H / Ctrl+Shift+H |
 | Flashcard review | Space to show, 1 to 4 to grade |
+| Show or hide sidebar / notes list / study panel | ⌘⌥1 / ⌘⌥2 / ⌘⌥3 (Ctrl+Alt+1/2/3) |
+| Resize a pane | Drag its edge, or focus the edge and use ← / → (Enter hides or shows it) |
 
 ## Not included
 

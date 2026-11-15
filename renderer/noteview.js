@@ -14,6 +14,7 @@ import { runAI, cancelAI, job, isRunning, aiReady, clearJob } from './ai.js';
 import { fmtTime, parseTime, uid, todayStr, extractJson, normalizeCards, normalizeQuiz, newCardSchedule } from './lib/util.js';
 import { buildContext, summaryPrompt, askPrompt, flashcardPrompt, quizPrompt, practicePrompt, visualPrompt, parseVisual } from './lib/prompts.js';
 import { sourcesFor, courseMaterials } from './materials.js';
+import { separator } from './layout.js';
 
 const TABS = [
   { id: 'transcript', label: 'Transcript' },
@@ -75,9 +76,10 @@ export function mountNote(container, note, { viewer = false } = {}) {
   [['mic', 'Microphone'], ['both', 'Mic + computer audio'], ['system', 'Computer audio only']].map(([v, l]) => h('option', { value: v, selected: (S.lib.settings.recordSource || 'mic') === v, text: l })));
   c.attachRow = h('div', { class: 'attach-row' });
   const head = h('header', { class: 'note-head' },
-    h('div', { class: 'note-head-row' }, title, viewer ? null : [sourceSelect, c.recordBtn], c.moreBtn),
+    h('div', { class: 'note-head-row' }, h('div', { class: 'title-wrap' }, title, c.moreBtn), viewer ? null : [sourceSelect, c.recordBtn]),
     h('div', { class: 'note-meta' }, courseSelect,
-      h('span', { class: 'meta-text', text: fmtDate(note.created, { weekday: true }) }),
+      viewer ? h('span', { class: 'meta-text', text: fmtDate(note.created, { weekday: true }) })
+        : c.dateBtn = h('button', { type: 'button', class: 'meta-text meta-date', title: 'Change the lecture date', onClick: () => changeDate() }, fmtDate(note.created, { weekday: true })),
       c.metaExtra = h('span', { class: 'meta-text' })),
     c.attachRow,
   );
@@ -129,7 +131,7 @@ export function mountNote(container, note, { viewer = false } = {}) {
   const side = h('aside', { class: 'panel', 'aria-label': 'Study tools' }, h('div', { class: 'tabs', role: 'tablist', 'aria-label': 'Study tools' }, c.tabButtons), c.panel);
 
   c.transport = h('footer', { class: 'transport' });
-  container.append(h('div', { class: 'note' }, head, h('div', { class: 'note-body' }, editorPane, side), c.transport));
+  container.append(h('div', { class: 'note' }, head, h('div', { class: 'note-body' }, editorPane, side, separator('panel', { fromRight: true })), c.transport));
 
   c.offs.push(
     bus.on('recording', () => { if (ctx === c) { renderRecordButton(); renderTransport(); } }),
@@ -559,6 +561,25 @@ function openEq(anchor) {
     panel.remove(); document.removeEventListener('mousedown', close, true); document.removeEventListener('keydown', close, true); anchor.focus();
   };
   setTimeout(() => { document.addEventListener('mousedown', close, true); document.addEventListener('keydown', close, true); });
+}
+
+// Keeps the time of day so notes from the same day stay in order.
+async function changeDate() {
+  const c = ctx;
+  const { note } = c;
+  const d = new Date(note.created);
+  const pad = (n) => String(n).padStart(2, '0');
+  const out = await formDialog({
+    title: 'Lecture date', submitLabel: 'Save',
+    fields: [{ name: 'date', label: 'Date', type: 'date', required: true, value: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` }],
+  });
+  if (!out || !/^\d{4}-\d{2}-\d{2}$/.test(out.date)) return;
+  const [y, m, day] = out.date.split('-').map(Number);
+  d.setFullYear(y, m - 1, day);
+  note.created = d.getTime();
+  touchNote(note);
+  bus.emit('library');
+  if (ctx === c) c.dateBtn.textContent = fmtDate(note.created, { weekday: true });
 }
 
 async function trimRecording() {

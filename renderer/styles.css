@@ -85,8 +85,9 @@ kbd { font: 11px var(--sans); border: 1px solid var(--line-strong); border-radiu
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 
 /* ------------------------------------------------------------ layout --- */
-#app { display: grid; grid-template-columns: 250px 300px minmax(0, 1fr); height: 100vh; }
-#app.no-list { grid-template-columns: 250px minmax(0, 1fr); }
+#app { display: grid; grid-template-columns: var(--w-side, 250px) var(--w-list, 300px) minmax(0, 1fr); height: 100vh; position: relative; }
+#app.no-list { grid-template-columns: var(--w-side, 250px) minmax(0, 1fr); }
+#sidebar, #list { min-width: 0; overflow: hidden; }
 #app.no-list #list { display: none; }
 #sidebar { background: var(--sunken); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
 #list { background: var(--bg); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; overflow-y: auto; }
@@ -220,7 +221,8 @@ body.mac .no-list .page-head, .note-head { -webkit-app-region: no-drag; }
 .note-title:focus-visible { outline: none; box-shadow: 0 2px 0 var(--accent); border-radius: 0; }
 .note-meta { display: flex; align-items: center; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
 .meta-text { color: var(--muted); font-size: 13px; }
-.note-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 400px); min-height: 0; }
+.note-body { display: grid; grid-template-columns: minmax(0, 1fr) var(--w-panel, 400px); min-height: 0; position: relative; }
+.panel { min-width: 0; overflow: hidden; }
 .note-editor { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
 .toolbar { display: flex; align-items: center; gap: 2px; padding: 6px 20px; border-bottom: 1px solid var(--line); }
 .tool { width: 30px; height: 28px; border: 0; border-radius: 6px; background: none; color: var(--muted); display: inline-grid; place-items: center; font-size: 14px; }
@@ -371,12 +373,12 @@ body.mac .no-list .page-head, .note-head { -webkit-app-region: no-drag; }
 .welcome-ai { margin-top: 24px; font-size: 13px; color: var(--muted); display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
 
 @media (max-width: 1180px) {
-  #app { grid-template-columns: 220px 250px minmax(0, 1fr); }
-  .note-body { grid-template-columns: minmax(0, 1fr) 320px; }
   .editor { padding-left: 78px; padding-right: 18px; }
 }
 @media (max-width: 1020px) {
   .note-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1.2fr) minmax(0, 1fr); }
+  :root.panel-hidden .note-body { grid-template-rows: minmax(0, 1fr) 0; }
+  .sep-panel { display: none; }
   .panel { border-left: 0; border-top: 1px solid var(--line); }
 }
 
@@ -419,3 +421,37 @@ button.attach-chip { padding: 2px 10px; color: var(--accent); }
 .diagram.zoomed { position: fixed; inset: 24px; z-index: 80; display: flex; flex-direction: column; box-shadow: var(--shadow); }
 .diagram.zoomed .diagram-zoom { flex: 1; min-height: 0; cursor: zoom-out; }
 .diagram.zoomed img { height: 100%; object-fit: contain; }
+
+/* ------------------------------------------------------- pane dividers --- */
+.sep { position: absolute; top: 0; bottom: 0; width: 9px; margin-left: -4px; z-index: 20; cursor: col-resize; touch-action: none; }
+.sep::after { content: ''; position: absolute; top: 0; bottom: 0; left: 4px; width: 1px; background: transparent; transition: background .15s; }
+.sep:hover::after, .sep:focus-visible::after, body.resizing .sep::after { background: var(--accent); width: 2px; left: 3.5px; }
+.sep:focus-visible { outline: none; }
+.sep-side { left: var(--w-side, 250px); }
+.sep-list { left: calc(var(--w-side, 250px) + var(--w-list, 300px)); }
+#app.no-list .sep-list, #app.viewer .sep-side, #app.viewer .sep-list { display: none; }
+.sep-panel { right: var(--w-panel, 400px); margin-left: 0; margin-right: -4px; }
+.sep-expand { position: absolute; top: 50%; left: 1px; transform: translateY(-50%); width: 18px; height: 44px; padding: 0; display: grid; place-items: center;
+  border: 1px solid var(--line-strong); border-radius: 0 8px 8px 0; background: var(--raised); color: var(--muted); cursor: pointer; }
+.sep-panel .sep-expand { left: auto; right: 1px; border-radius: 8px 0 0 8px; }
+.sep-expand:hover { color: var(--accent); border-color: var(--accent); }
+body.resizing { cursor: col-resize; user-select: none; }
+body.resizing iframe, body.resizing audio { pointer-events: none; }
+/* With the sidebar hidden, keep content clear of the macOS window buttons. */
+:root.side-hidden body.mac .list-head { padding-left: 84px; }
+:root.side-hidden.list-hidden body.mac .note-head { padding-top: 40px; }
+/* With both left panes hidden, the note header is what moves the window. */
+:root.side-hidden.list-hidden .note-head { -webkit-app-region: drag; }
+:root.side-hidden.list-hidden .note-head :is(input, select, button) { -webkit-app-region: no-drag; }
+:root.side-hidden #app.no-list .page { padding-top: 48px; }
+/* Both dividers sit at the same edge when both panes are hidden; stack their buttons. */
+.sep-list .sep-expand { top: calc(50% + 52px); }
+.meta-date { background: none; border: 0; padding: 2px 6px; margin: 0 -6px; border-radius: 6px; cursor: pointer; }
+.meta-date:hover { background: var(--line); color: var(--ink); }
+
+/* The note's ••• menu sits right after its title; the title box grows with its text. */
+.title-wrap { flex: 1; min-width: 0; display: flex; align-items: center; gap: 4px; }
+.title-wrap .note-title { flex: 0 1 auto; field-sizing: content; min-width: 6ch; max-width: 100%; }
+.note { grid-template-columns: minmax(0, 1fr); }
+.note-head-row { min-width: 0; }
+.title-wrap .note-title { min-width: 0; text-overflow: ellipsis; }

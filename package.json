@@ -1,7 +1,7 @@
 {
   "name": "listenote",
   "productName": "ListeNote",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Record lectures, type timestamped notes, and study from them with the AI subscription you already have. Runs locally.",
   "main": "main/main.js",
   "license": "MIT",

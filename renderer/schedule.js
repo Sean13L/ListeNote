@@ -164,6 +164,26 @@ export function mountSchedule(container) {
     } catch (err) { toast(errorMessage(err), 'error'); }
   }
 
+  async function editSession(s) {
+    const out = await formDialog({
+      title: 'Edit class session', submitLabel: 'Save',
+      fields: [
+        { name: 'title', label: 'Title', value: s.title, required: true },
+        { name: 'date', label: 'Date', type: 'date', value: s.date, required: true },
+        { name: 'start', label: 'Starts', type: 'time', value: s.start },
+        { name: 'end', label: 'Ends', type: 'time', value: s.end },
+        { name: 'topic', label: 'Topic (optional)', value: s.topic },
+      ],
+    });
+    if (!out || !/^\d{4}-\d{2}-\d{2}$/.test(out.date)) return;
+    const time = (t) => (/^\d{2}:\d{2}$/.test(t) ? t : '');
+    if (out.date !== s.date || time(out.start) !== s.start) s.notified = false;
+    Object.assign(s, { title: out.title.slice(0, 120) || s.title, date: out.date, start: time(out.start), end: time(out.end), topic: out.topic.slice(0, 300) });
+    saveLib();
+    bus.emit('library');
+    draw();
+  }
+
   function drawReview() {
     page.append(h('header', { class: 'page-head' }, h('div', null, h('h1', { text: 'Which of these are classes?' }),
       h('p', { class: 'page-sub', text: aiReady().ok ? 'Your AI made a first guess from the event names. Correct anything that is wrong, then add them.' : 'Tick your classes and name their course.' }))));
@@ -209,7 +229,8 @@ export function mountSchedule(container) {
         h('div', { class: 'assignment-main' },
           h('span', { class: 'assignment-title', text: s.title }),
           h('span', { class: 'assignment-meta' }, course ? h('span', { class: 'dot', style: { '--dot': course.color } }) : null, h('span', { text: [course ? courseLabel(course) : null, s.topic, s.location].filter(Boolean).join(' · ') }))),
-        button(note ? 'Open note' : 'Take notes', () => openSession(s), { kind: note ? 'small' : 'small', iconName: note ? 'notes' : 'plus' }),
+        button(note ? 'Open note' : 'Take notes', () => openSession(s), { kind: 'small', iconName: note ? 'notes' : 'plus' }),
+        button('Edit', () => editSession(s), { kind: 'small', iconName: 'edit' }),
         button('Remove', () => { S.lib.sessions = sessions().filter((x) => x !== s); saveLib(); bus.emit('library'); draw(); }, { kind: 'small' }));
     };
     for (const [date, list] of byDate) {

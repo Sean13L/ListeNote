@@ -5,6 +5,7 @@ import {
   dueCards, openAssignments, overdueCount, providerInfo, applyAppearance, COURSE_COLORS, fmtDate, saveNote,
 } from './state.js';
 import { mountMaterials } from './materials.js';
+import { separator, applyLayout, togglePane } from './layout.js';
 import { mountSchedule, mountMaster, sessionStartMs, openSession } from './schedule.js';
 import { todayStr } from './lib/util.js';
 import { h, clear, icon, iconButton, button, toast, confirmDialog, formDialog, showMenu, emptyState, errorMessage } from './dom.js';
@@ -296,6 +297,7 @@ api.onMenu((action) => {
   if (action === 'new-note') createNote();
   else if (action === 'new-course') editCourse(null);
   else if (action === 'master') S.go({ kind: 'master' });
+  else if (['side', 'list', 'panel'].includes(action)) togglePane(action);
   else if (action === 'settings') S.go({ kind: 'settings' });
   else if (action === 'find') { searchInput.focus(); searchInput.select(); }
   else if (S.view.kind === 'notes' && currentNoteId()) {
@@ -362,6 +364,8 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) flush
       return;
     }
     buildSidebar();
+    $app.append(separator('side'), separator('list'));
+    applyLayout();
     setInterval(checkReminders, 30000);
     checkReminders();
     const latest = allNotes().filter((n) => !n.archived).sort((a, b) => b.updated - a.updated)[0];

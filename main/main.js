@@ -188,6 +188,10 @@ function buildMenu() {
     {
       label: 'View',
       submenu: [
+        { label: 'Show or Hide Sidebar', accelerator: 'CmdOrCtrl+Alt+1', click: send('side') },
+        { label: 'Show or Hide Notes List', accelerator: 'CmdOrCtrl+Alt+2', click: send('list') },
+        { label: 'Show or Hide Study Panel', accelerator: 'CmdOrCtrl+Alt+3', click: send('panel') },
+        { type: 'separator' },
         { role: 'resetZoom' }, { role: 'zoomIn' }, { role: 'zoomOut' },
         { type: 'separator' },
         { role: 'togglefullscreen' },
