@@ -54,6 +54,21 @@ const NOTE_STYLE = `Write them as ordinary study notes on the subject itself, li
 - Keep bullets short and scannable, using fragments and symbols (=, →, ↑, ↓) where natural. Include examples, numbers and formulas exactly.
 - Mark points that are likely to be tested with "**(Exam)**".`;
 
+const SVG_RULES = 'one self-contained <svg> with a viewBox about 800 wide, width="100%"; only shapes, paths, lines and <text>; no scripts, no images, no external links, no foreignObject; system-ui font; at least 13px text; dark text on light fills with a white background rectangle; every arrow and box labelled.';
+
+const DIAGRAM_RULE = `Where a picture would genuinely help (a graph like supply and demand or surplus areas, a process, a cycle, a comparison, a hierarchy), add a diagram right after the bullets it illustrates, up to 4 in total. Base diagrams on the course materials (slides, textbook) when they cover the topic, reproducing their graphs and labels faithfully. Write each one exactly like this:
+\`\`\`diagram
+TITLE: short title
+DESCRIPTION: one or two sentences describing what it shows
+<svg ...>...</svg>
+\`\`\`
+SVG rules: ${SVG_RULES}`;
+
+// Splits notes Markdown into [{ md }] and [{ diagram: raw block }] in order.
+export function splitDiagrams(markdown) {
+  return String(markdown).split(/```diagram\s*\n([\s\S]*?)```/).map((part, i) => (i % 2 ? { diagram: part } : { md: part })).filter((p) => p.diagram || p.md.trim());
+}
+
 // Split a transcript into runs whose formatted text stays under `budget` characters.
 export function chunkTranscript(transcript, budget) {
   const chunks = [[]];
@@ -99,6 +114,8 @@ This material combines several lectures and the student's notes, plus extracts f
 
 ${NOTE_STYLE}
 
+${DIAGRAM_RULE}
+
 Then add these sections, in this order, after the topic notes:
 
 ## Key terms
@@ -122,6 +139,8 @@ Write study notes on this material in Markdown.
 
 ${NOTE_STYLE}
 - ${tsRule(hasTimes)}
+
+${DIAGRAM_RULE}
 
 Then end with these two sections:
 
@@ -223,7 +242,7 @@ TITLE: a short title
 DESCRIPTION: two or three sentences describing what the diagram shows, for students who cannot see it
 <svg ...>...</svg>
 
-SVG rules: one self-contained <svg> with a viewBox about 800 wide, width="100%"; only shapes, paths, lines and <text>; no scripts, no images, no external links, no foreignObject; system-ui font; at least 13px text; dark text on light fills with a white background rectangle; every arrow and box labelled.`;
+SVG rules: ${SVG_RULES}`;
 }
 
 // Returns { title, description, svg } or throws.

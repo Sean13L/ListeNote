@@ -12,7 +12,7 @@ import { createEditor, sanitizeHtml } from './editor.js';
 import { recorder, Player, transcription, transcribeNote, cancelTranscription, computeSilence } from './audio.js';
 import { runAI, cancelAI, job, isRunning, aiReady, clearJob } from './ai.js';
 import { fmtTime, parseTime, uid, todayStr, extractJson, normalizeCards, normalizeQuiz, newCardSchedule } from './lib/util.js';
-import { MAX_CONTEXT_CHARS, chunkTranscript, partNotesPrompt, mergeNotesPrompt, buildContext, summaryPrompt, askPrompt, flashcardPrompt, quizPrompt, practicePrompt, visualPrompt, parseVisual } from './lib/prompts.js';
+import { MAX_CONTEXT_CHARS, chunkTranscript, partNotesPrompt, mergeNotesPrompt, buildContext, summaryPrompt, askPrompt, flashcardPrompt, quizPrompt, practicePrompt, visualPrompt, parseVisual, splitDiagrams } from './lib/prompts.js';
 import { sourcesFor, courseMaterials } from './materials.js';
 import { separator, togglePane } from './layout.js';
 
@@ -755,7 +755,7 @@ function toPdfBody(note, html) {
   }
   if (body.textContent.trim()) root.append(h('h2', { text: 'Notes' }), body);
   if (note.summary) {
-    const md = renderMarkdown(note.summary.markdown);
+    const md = notesWithDiagrams(note.summary.markdown);
     for (const hd of md.querySelectorAll('h2, h3, h4')) hd.replaceWith(h('h3', { text: hd.textContent }));
     root.append(h('h2', { text: 'Summary' }), md);
   }
@@ -1127,7 +1127,7 @@ function renderSummary() {
   }
 
   const added = new Set(S.lib.assignments.filter((a) => a.noteId === note.id).map((a) => a.title));
-  const md = renderMarkdown(note.summary.markdown, {
+  const md = notesWithDiagrams(note.summary.markdown, {
     onSeek: note.audio ? seek : null,
     onTask: (todo) => {
       if (!todo.title || /^none/i.test(todo.title)) return;
@@ -1405,6 +1405,16 @@ async function generateVisual(topic) {
     if (j) j.error = errorMessage(err);
     bus.emit('job', key);
   }
+}
+
+// Notes Markdown with ```diagram blocks drawn in place; a block that fails to parse is skipped.
+function notesWithDiagrams(markdown, opts) {
+  const out = h('div');
+  for (const p of splitDiagrams(markdown)) {
+    if (p.md) out.append(renderMarkdown(p.md, opts));
+    else { try { out.append(diagram(parseVisual(p.diagram))); } catch { /* bad drawing: leave it out */ } }
+  }
+  return out;
 }
 
 // AI-drawn SVG is shown as an <img>: inside an image, SVG cannot run scripts or

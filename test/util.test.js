@@ -295,3 +295,11 @@ test('long material is split into chunks and merged', async () => {
   const m = mergeNotesPrompt(['A notes', 'B notes'], { title: 'Bio', today: '2026-11-14', hasTimes: true });
   assert.match(m, /part 1 of 2:\nA notes[\s\S]*part 2 of 2:\nB notes[\s\S]*## To-do/);
 });
+
+test('splitDiagrams pulls diagram blocks out of notes in order', async () => {
+  const { splitDiagrams, parseVisual } = await load('prompts.js');
+  const parts = splitDiagrams('## A\n- x\n```diagram\nTITLE: Surplus\nDESCRIPTION: d\n<svg viewBox="0 0 8 8"></svg>\n```\n## B');
+  assert.equal(parts.length, 3);
+  assert.equal(parseVisual(parts[1].diagram).title, 'Surplus');
+  assert.match(parts[2].md, /## B/);
+});
