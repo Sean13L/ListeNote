@@ -486,6 +486,14 @@ function registerIpc() {
     }
     return out;
   });
+  // Materials added before originals were kept: pick the PDF once to view the real slides.
+  handle('materials:attachPdf', async (_e, id) => {
+    const res = await dialog.showOpenDialog(win, { title: 'Choose the PDF of this material', properties: ['openFile'], filters: [{ name: 'PDF', extensions: ['pdf'] }] });
+    if (res.canceled || !res.filePaths[0]) return false;
+    await fsp.mkdir(matDir(), { recursive: true });
+    await fsp.copyFile(res.filePaths[0], path.join(matDir(), `${assertId(id)}.pdf`));
+    return true;
+  });
   handle('materials:load', async (_e, id) => JSON.parse(await fsp.readFile(matFile(id), 'utf8')));
   handle('materials:remove', async (_e, id) => { await fsp.rm(matFile(id), { force: true }); await fsp.rm(path.join(matDir(), `${assertId(id)}.pdf`), { force: true }); });
   handle('syllabus:read', async () => {

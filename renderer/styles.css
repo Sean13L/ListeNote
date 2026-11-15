@@ -221,7 +221,7 @@ body.mac .no-list .page-head, .note-head { -webkit-app-region: no-drag; }
 .note-title:focus-visible { outline: none; box-shadow: 0 2px 0 var(--accent); border-radius: 0; }
 .note-meta { display: flex; align-items: center; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
 .meta-text { color: var(--muted); font-size: 13px; }
-.note-body { display: grid; grid-template-columns: minmax(0, 1fr) var(--w-slides, 0px) var(--w-panel, 400px); min-height: 0; position: relative; }
+.note-body { display: grid; grid-template-columns: var(--w-slides, 0px) minmax(0, 1fr) var(--w-panel, 400px); min-height: 0; position: relative; }
 .panel { min-width: 0; overflow: hidden; }
 .note-editor { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
 .toolbar { display: flex; align-items: center; gap: 2px; padding: 6px 20px; border-bottom: 1px solid var(--line); }
@@ -489,9 +489,9 @@ body.mac .show-side { left: 8px; top: 36px; }
 .connect-status { display: block; font-size: 12.5px; color: var(--ink); margin-top: 2px; } .connect-status:empty { display: none; } .connect-status .btn { margin-left: 4px; }
 
 /* Materials viewer: course slides/readings beside the notes, resizable via .sep-slides. */
-.sep-slides { right: calc(var(--w-panel, 400px) + var(--w-slides, 0px)); margin-left: 0; margin-right: -4px; }
+.sep-slides { left: var(--w-slides, 0px); }
 :root.slides-hidden .sep-slides { display: none; }
-.viewer-pane { min-width: 0; overflow: hidden; display: flex; flex-direction: column; border-left: 1px solid var(--line); background: var(--bg); }
+.viewer-pane { min-width: 0; overflow: hidden; display: flex; flex-direction: column; border-right: 1px solid var(--line); background: var(--bg); }
 :root.slides-hidden .viewer-pane { display: none; }
 .viewer-head { display: flex; align-items: center; gap: 6px; padding: 8px; border-bottom: 1px solid var(--line); }
 .viewer-head select { flex: 1; min-width: 0; }
@@ -501,3 +501,4 @@ body.mac .show-side { left: 8px; top: 36px; }
 .viewer-text section { padding: 12px 0; border-bottom: 1px solid var(--line); }
 .viewer-text h4 { margin: 0 0 6px; font-size: 12.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
 .viewer-text p { margin: 0; white-space: pre-wrap; line-height: 1.5; }
+.viewer-text .notice { margin-bottom: 8px; }

@@ -133,7 +133,7 @@ export function mountNote(container, note, { viewer = false } = {}) {
     iconButton('chevron', 'Hide study panel', () => togglePane('panel'), { class: 'side-toggle hide-panel', size: 16 })), c.panel);
 
   c.transport = h('footer', { class: 'transport' });
-  container.append(h('div', { class: 'note' }, head, h('div', { class: 'note-body' }, editorPane, viewerPane(note), side, separator('panel', { fromRight: true, tab: false }), separator('slides', { fromRight: true, tab: false }),
+  container.append(h('div', { class: 'note' }, head, h('div', { class: 'note-body' }, viewerPane(note), editorPane, side, separator('panel', { fromRight: true, tab: false }), separator('slides', { tab: false }),
     iconButton('chevron', 'Show study panel', () => togglePane('panel'), { class: 'side-toggle show-panel', size: 16 })), c.transport));
 
   c.offs.push(
@@ -1040,7 +1040,15 @@ function viewerPane(note) {
     try {
       const chunks = await api.materialsLoad(m.id);
       if (pick.value !== id) return;
-      body.append(h('div', { class: 'viewer-text' }, chunks.map((c) => h('section', null, c.loc ? h('h4', { text: c.loc }) : null, h('p', { text: c.text })))));
+      const attach = button(/\.pdf$/i.test(m.name) ? 'Show the real slides' : 'Show a PDF version', async () => {
+        try {
+          if (!(await api.materialsAttachPdf(m.id))) return;
+          m.ext = 'pdf';
+          saveLib();
+          show(m.id);
+        } catch (err) { toast(errorMessage(err), 'error'); }
+      }, { kind: 'small', iconName: 'upload' });
+      body.append(h('div', { class: 'viewer-text' }, h('div', { class: 'notice' }, h('p', { text: 'Showing the text only. Choose the PDF file once to see the actual slides here.' }), attach), chunks.map((c) => h('section', null, c.loc ? h('h4', { text: c.loc }) : null, h('p', { text: c.text })))));
     } catch (err) { body.append(h('div', { class: 'viewer-text' }, h('p', { text: errorMessage(err) }))); }
   }
 
