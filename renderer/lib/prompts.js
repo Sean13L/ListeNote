@@ -72,7 +72,7 @@ export function partNotesPrompt(ctx, { today, hasTimes, i, n }) {
 
 Today's date is ${today}.
 
-The transcript above is part ${i} of ${n} of material too long to process at once. Write detailed notes on everything in THIS part of the transcript (use the student's notes only to help understand it). Another step will merge all parts, so do not summarise away detail.
+The material above is part ${i} of ${n} of material too long to process at once. Write detailed notes on everything in this part. Another step will merge all parts, so do not summarise away detail.
 
 ${NOTE_STYLE}
 - ${tsRule(hasTimes)}
@@ -80,10 +80,12 @@ ${NOTE_STYLE}
 ${TODO_SECTION(today)}`;
 }
 
-export function mergeNotesPrompt(parts, { title, today, hasTimes, master = null }) {
+// header: buildContext text (typed notes, course extracts) sent once here instead of with every part.
+export function mergeNotesPrompt(parts, { header = '', title, today, hasTimes, master = null, final = true }) {
   const material = parts.map((p, i) => `<material>\nNotes on part ${i + 1} of ${parts.length}:\n${p}\n</material>`).join('\n\n');
-  const ctx = { text: `Title: ${title || 'Untitled'}\n\nThe material was too long to read at once, so notes were written on each part in order. Combine them into ONE final result as instructed below: merge repeated topics, keep all detail, examples, formulas and citations, and keep timestamps exactly as they appear.\n\n${material}` };
-  return summaryPrompt(ctx, { today, hasTimes, master });
+  const intro = `${header || `Title: ${title || 'Untitled'}`}\n\nThe recording was too long to read at once, so notes were written on each part in order. Combine them with the material above into ONE result: merge repeated topics, keep all detail, examples, formulas and citations, and keep timestamps exactly as they appear.\n\n${material}`;
+  if (!final) return `${intro}\n\nReturn the combined notes in the same Markdown style, leaving nothing out. Keep any to-do lines as they are.`;
+  return summaryPrompt({ text: intro }, { today, hasTimes, master });
 }
 
 export function summaryPrompt(ctx, { today, hasTimes, master = null }) {

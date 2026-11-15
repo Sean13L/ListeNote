@@ -146,7 +146,7 @@ export function mountNote(container, note, { viewer = false } = {}) {
   renderMeta();
   renderAttachments();
   // A new master note writes its study notes straight away.
-  const autoMaster = note.master && !note.summary && !isRunning(`summary:${note.id}`) && aiReady().ok;
+  const autoMaster = note.master && !note.summary && !isRunning(`summary:${note.id}`) && !longRuns.has(note.id) && aiReady().ok;
   selectTab(autoMaster ? 'summary' : c.tab);
   if (autoMaster) generateSummary();
   renderTransport();
@@ -1016,29 +1016,18 @@ function renderTranscript() {
 
 // --------------------------------------------------------------- summary ---
 
+// Notes for material too long for one request, keyed by note id: { label, keys, stopped }.
+const longRuns = new Map();
+
 async function generateSummary() {
   const c = ctx;
   const { note } = c;
   const { built, hasTimes, inputs } = await contextFor(note);
   if (built.empty) { toast('Type some notes or transcribe the recording first.'); return; }
   const key = `summary:${note.id}`;
-  const opts = { today: todayStr(), hasTimes, master: note.master || null };
+  const opts = { today: todayStr(), hasTimes, master: note.master || null, title: note.title };
   try {
-    let text;
-    if (!built.truncated) text = await runAI(key, summaryPrompt(built, opts));
-    else {
-      // Too long for one request: write notes on each slice of the transcript, then merge them.
-      // shortcut: typed notes + course extracts are resent with every slice; if those alone fill the budget, slices get small and slow.
-      const budget = Math.max(40000, MAX_CONTEXT_CHARS - built.text.indexOf('<transcript>') - 2000);
-      const chunks = chunkTranscript(inputs.transcript, budget);
-      const parts = [];
-      for (const [i, chunk] of chunks.entries()) {
-        toast(`Long material: writing part ${i + 1} of ${chunks.length}…`);
-        parts.push(await runAI(key, partNotesPrompt(buildContext({ ...inputs, transcript: chunk }), { ...opts, i: i + 1, n: chunks.length })));
-      }
-      toast('Combining the parts…');
-      text = await runAI(key, mergeNotesPrompt(parts, { ...opts, title: note.title }));
-    }
+    const text = built.truncated ? await longSummary(note, inputs, opts) : await runAI(key, summaryPrompt(built, opts));
     note.summary = { markdown: text, created: Date.now(), truncated: false };
     note.updated = Date.now();
     saveNote(note.id, { now: true });
@@ -1049,12 +1038,80 @@ async function generateSummary() {
   }
 }
 
+// Map-reduce: notes on each slice (3 at a time, transcript only), then merge with the typed notes and
+// course extracts sent once. Merges in groups when the part notes are themselves too long. Nothing is cut.
+async function longSummary(note, inputs, opts) {
+  const key = `summary:${note.id}`;
+  const room = MAX_CONTEXT_CHARS - 4000;
+  const run = { label: 'Splitting long material…', keys: new Set(), stopped: false };
+  longRuns.set(note.id, run);
+  let n = 0;
+  const ai = async (prompt, label) => {
+    if (run.stopped) throw new Error('Cancelled.');
+    const k = `${key}:p${++n}`;
+    run.keys.add(k); run.label = label;
+    try { return await runAI(k, prompt); } finally { run.keys.delete(k); clearJob(k); }
+  };
+  try {
+    const base = { title: inputs.title, course: inputs.course };
+    const header = buildContext({ ...base, lines: inputs.lines, transcript: [], sources: inputs.sources });
+    // Typed notes go with the merge when they fit; otherwise they are sliced like the transcript.
+    const notesFit = header.text.length < room / 3;
+    const slices = [
+      ...chunkTranscript(inputs.transcript, room).filter((t) => t.length).map((t) => ({ ...base, lines: [], transcript: t })),
+      ...(notesFit ? [] : chunkTranscript(inputs.lines.filter((l) => l.text && l.text.trim()), room).map((l) => ({ ...base, lines: l, transcript: [] }))),
+    ];
+    const head = notesFit ? header.text : buildContext({ ...base, lines: [], transcript: [], sources: inputs.sources }).text;
+    let parts = new Array(slices.length);
+    let done = 0;
+    let next = 0;
+    const worker = async () => {
+      while (next < slices.length) {
+        const i = next++;
+        parts[i] = await ai(partNotesPrompt(buildContext(slices[i]), { ...opts, i: i + 1, n: slices.length }), `Writing notes: ${done} of ${slices.length} parts done…`);
+        done++;
+        run.label = `Writing notes: ${done} of ${slices.length} parts done…`;
+        bus.emit('job', key);
+      }
+    };
+    await Promise.all([1, 2, 3].map(worker));
+    // Merge in groups until everything fits into one final call.
+    while (parts.join('').length + head.length > room) {
+      const groups = [[]];
+      let size = 0;
+      for (const p of parts) {
+        if (size + p.length > room && groups[groups.length - 1].length) { groups.push([]); size = 0; }
+        groups[groups.length - 1].push(p); size += p.length;
+      }
+      if (groups.length === parts.length) break; // each part alone fills a request; send as is
+      parts = await Promise.all(groups.map((g) => ai(mergeNotesPrompt(g, { ...opts, final: false }), 'Combining parts…')));
+    }
+    return await ai(mergeNotesPrompt(parts, { ...opts, header: head }), 'Combining into final notes…');
+  } finally {
+    longRuns.delete(note.id);
+    bus.emit('job', key);
+  }
+}
+
+function stopLong(id) {
+  const run = longRuns.get(id);
+  if (!run) return;
+  run.stopped = true;
+  for (const k of run.keys) cancelAI(k);
+}
+
 function renderSummary() {
   const c = ctx;
   const { note } = c;
   const key = `summary:${note.id}`;
   c.running[key] = isRunning(key);
 
+  const long = longRuns.get(note.id);
+  if (long) {
+    c.panel.append(h('div', { class: 'working', role: 'status' }, h('span', { class: 'spinner', 'aria-hidden': 'true' }), h('span', { text: long.label }), h('span', { class: 'spacer' }), button('Stop', () => stopLong(note.id), { kind: 'small' })),
+      h('p', { class: 'footnote', text: 'This material is long, so it is read in parts at the same time and then combined. Nothing is left out.' }));
+    return;
+  }
   if (isRunning(key)) {
     c.panel.append(workingRow('Writing summary…', key), streamBox(key));
     return;
