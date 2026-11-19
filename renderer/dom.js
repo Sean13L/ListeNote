@@ -292,5 +292,5 @@ export function emptyState(iconName, title, body, ...actions) {
 }
 
 export async function copyText(text) {
-  try { await navigator.clipboard.writeText(text); toast('Copied.'); } catch { toast('Could not copy.', 'error'); }
+  try { await window.listenote.copyText(String(text)); toast('Copied.'); } catch { toast('Could not copy.', 'error'); }
 }

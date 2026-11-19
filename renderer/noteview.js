@@ -1189,7 +1189,7 @@ function renderSummary() {
     h('div', { class: 'panel-tools' },
       h('span', { class: 'footnote', text: `Written ${fmtDate(note.summary.created)}${note.summary.truncated ? ' · long transcript was cut short' : ''}` }),
       h('span', { class: 'spacer' }),
-      iconButton('copy', 'Copy summary', () => copyText(note.summary.markdown)),
+      iconButton('copy', 'Copy summary', () => copyText(note.summary.markdown.replace(/```diagram\s*\n(?:TITLE:\s*(.*)\n)?[\s\S]*?```/g, (_, t) => `[Diagram: ${(t || 'diagram').trim()}]`))),
       iconButton('refresh', 'Write summary again', () => generateSummary())),
     md,
     h('p', { class: 'footnote', text: 'AI summaries can contain mistakes. Check important details against the recording.' }),

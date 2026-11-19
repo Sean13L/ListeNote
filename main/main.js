@@ -1,5 +1,5 @@
 const {
-  app, BrowserWindow, Menu, dialog, ipcMain, nativeTheme, protocol, session, shell,
+  app, BrowserWindow, Menu, clipboard, dialog, ipcMain, nativeTheme, protocol, session, shell,
   systemPreferences, utilityProcess, desktopCapturer, globalShortcut, safeStorage,
 } = require('electron');
 const fs = require('node:fs');
@@ -461,6 +461,12 @@ function registerIpc() {
       if (!crypto.timingSafeEqual(got, Buffer.from(lf.hash, 'hex'))) throw new Error('Wrong password.');
     }
     return store.unseal(id);
+  });
+
+  // Copy buttons. The page's clipboard API is blocked by the permission lockdown, so copy here.
+  handle('clipboard:write', (_e, text) => {
+    if (typeof text !== 'string' || text.length > 5_000_000) throw new Error('Nothing to copy.');
+    clipboard.writeText(text);
   });
 
   // ---- course materials and syllabus

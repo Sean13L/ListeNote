@@ -34,6 +34,7 @@ contextBridge.exposeInMainWorld('listenote', {
   lockUnlock: invoke('lock:unlock'),
   openWindow: invoke('app:window'),
   materialsAdd: invoke('materials:add'),
+  copyText: invoke('clipboard:write'),
   materialsLoad: invoke('materials:load'),
   materialsAttachPdf: invoke('materials:attachPdf'),
   materialsRemove: invoke('materials:remove'),
