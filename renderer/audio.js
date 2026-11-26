@@ -149,7 +149,7 @@ export const recorder = {
 };
 
 // ----------------------------------------------------- live transcript ---
-// Feeds the recording to Whisper in ~20 second pieces while class goes on.
+// Feeds the recording to Whisper in ~8 second pieces while class goes on.
 // Samples are dropped while paused, so sample count stays in step with the
 // recording clock and every line lands at the right time.
 
@@ -176,8 +176,8 @@ async function startLive(stream, { note, model, language }) {
     }).catch(() => {});
   };
   const flush = (all) => {
-    if (len < SAMPLE_RATE * (all ? 1 : 22)) return;
-    const [, cut] = all ? [0, len] : splitPoints(buf.subarray(0, len), SAMPLE_RATE, { maxSec: 20, searchSec: 5 })[0];
+    if (len < SAMPLE_RATE * (all ? 1 : 10)) return;
+    const [, cut] = all ? [0, len] : splitPoints(buf.subarray(0, len), SAMPLE_RATE, { maxSec: 8, searchSec: 3 })[0];
     run(buf.slice(0, cut), consumed / SAMPLE_RATE);
     consumed += cut;
     buf.copyWithin(0, cut, len);
@@ -198,6 +198,7 @@ async function startLive(stream, { note, model, language }) {
       flush(true);
       await busy;
       transcription.live = null;
+      transcription.modelPercent = null;
       saveNote(note.id, { now: true });
       bus.emit('transcription', note.id);
     },
@@ -355,9 +356,10 @@ export async function decodeToMono(bytes) {
 export const transcription = { noteId: null, live: null, phase: null, percent: 0, modelPercent: null, cancelled: false };
 
 api.onModelProgress((msg) => {
-  if (!transcription.noteId) return;
+  const id = transcription.noteId || transcription.live;
+  if (!id) return;
   transcription.modelPercent = msg.type === 'model-ready' ? null : msg.percent;
-  bus.emit('transcription', transcription.noteId);
+  bus.emit('transcription', id);
 });
 
 export async function transcribeNote(note) {

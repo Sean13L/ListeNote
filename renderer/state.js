@@ -27,7 +27,7 @@ export const DEFAULT_SETTINGS = {
   noiseReduction: true,
   micId: '',
   outputId: '',
-  liveTranscribe: false,
+  liveTranscribe: true,
   identifySpeakers: false,
   eq: [0, 0, 0],
   editorWidth: 'normal',

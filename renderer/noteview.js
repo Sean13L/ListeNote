@@ -935,7 +935,8 @@ function renderTranscript() {
   const live = transcription.live === note.id;
   if (live) {
     c.panel.append(h('div', { class: 'working', role: 'status' }, h('span', { class: 'rec-dot', 'aria-hidden': 'true' }),
-      h('span', { text: note.transcript.length ? 'Transcribing live…' : 'Transcribing live. The first lines appear about 20 seconds in.' })));
+      h('span', { text: transcription.modelPercent != null ? `Downloading speech model (one time)… ${transcription.modelPercent}%`
+        : note.transcript.length ? 'Transcribing live…' : 'Transcribing live. The first lines appear about 10 seconds in.' })));
     if (!note.transcript.length) return;
   }
 
