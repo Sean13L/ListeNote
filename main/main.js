@@ -134,9 +134,9 @@ function lockDownPermissions() {
   const fromApp = (url) => typeof url === 'string' && url.startsWith(`${ORIGIN}/`);
   ses.setPermissionRequestHandler((wc, permission, callback, details) => {
     const audioOnly = permission === 'media' && (details.mediaTypes || []).every((t) => t === 'audio');
-    callback((audioOnly || permission === 'notifications') && fromApp(details.requestingUrl || wc.getURL()));
+    callback((audioOnly || ['notifications', 'clipboard-sanitized-write'].includes(permission)) && fromApp(details.requestingUrl || wc.getURL()));
   });
-  ses.setPermissionCheckHandler((wc, permission, origin) => ['media', 'notifications'].includes(permission) && fromApp(`${origin}/`));
+  ses.setPermissionCheckHandler((wc, permission, origin) => ['media', 'notifications', 'clipboard-sanitized-write'].includes(permission) && fromApp(`${origin}/`));
   // "Computer audio": grant the system audio mix (meetings, videos). Chromium needs a
   // video source too; the page drops that track straight away.
   ses.setDisplayMediaRequestHandler((request, callback) => {
