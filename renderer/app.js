@@ -9,7 +9,7 @@ import { separator, applyLayout, togglePane } from './layout.js';
 import { mountSchedule, mountMaster, sessionStartMs, openSession } from './schedule.js';
 import { todayStr } from './lib/util.js';
 import { h, clear, icon, iconButton, button, toast, confirmDialog, formDialog, showMenu, emptyState, errorMessage } from './dom.js';
-import { mountNote, unmountNote, currentNoteId, toggleRecord, togglePlay, playFromCaret, importAudio, seek, openMoreMenu } from './noteview.js';
+import { mountNote, unmountNote, currentNoteId, toggleRecord, stopRecording, togglePlay, playFromCaret, importAudio, seek, openMoreMenu } from './noteview.js';
 import { mountReview, mountAssignments, mountGuides, unmountStudy } from './study.js';
 import { mountSettings } from './settings.js';
 import { recorder, transcription } from './audio.js';
@@ -22,11 +22,11 @@ const $main = document.getElementById('main');
 
 let searchInput = null;
 let sidebarBody = null;
+let recBox = null;
 
 // ============================================================== routing ===
 
 S.go = (view) => {
-  if (recorder.active && (view.kind !== 'notes')) { toast('Stop recording before leaving this note.', 'error'); return; }
   S.view = { filter: S.view.filter, query: S.view.query, ...view };
   if (view.kind === 'notes' && view.filter) S.view.filter = view.filter;
   route();
@@ -34,7 +34,6 @@ S.go = (view) => {
 
 S.pendingSeek = null;
 S.openNote = (id, { seek: seekTo = null } = {}) => {
-  if (recorder.active && recorder.noteId !== id) { toast('Stop recording before opening another note.', 'error'); return; }
   S.noteId = id && S.notes[id] ? id : null;
   S.pendingSeek = seekTo === undefined ? null : seekTo;
   if (S.view.kind !== 'notes') S.view = { kind: 'notes', filter: { type: 'all', id: null }, query: '' };
@@ -47,6 +46,7 @@ function route() {
   const { kind } = S.view;
   $app.classList.toggle('no-list', kind !== 'notes');
   renderSidebar();
+  renderRecPill();
   if (kind !== 'notes') { unmountNote(); }
   unmountStudy();
   if (kind === 'notes') {
@@ -89,9 +89,45 @@ function buildSidebar() {
       iconButton('chevron', 'Hide sidebar', () => togglePane('side'), { class: 'side-toggle hide-side', size: 16 })),
     h('div', { class: 'sidebar-top' },
       h('div', { class: 'search-wrap' }, icon('search', 15), searchInput),
-      button('New note', () => createNote(), { kind: 'primary', iconName: 'plus', attrs: { class: 'btn btn-primary btn-block' } })),
+      button('New note', () => createNote(), { kind: 'primary', iconName: 'plus', attrs: { class: 'btn btn-primary btn-block' } }),
+      recBox = h('div', { class: 'rec-box', hidden: true })),
     sidebarBody,
   );
+}
+
+// Shown on every view while a recording runs: jump back to its note, or stop it.
+function renderRecPill() {
+  if (!recBox) return;
+  clear(recBox);
+  // On the recording note itself, the record bar already shows time and Stop.
+  const shown = recorder.active && !(S.view.kind === 'notes' && S.noteId === recorder.noteId);
+  recBox.hidden = !shown;
+  if (!shown) return;
+  const note = S.notes[recorder.noteId];
+  recBox.append(
+    h('button', { type: 'button', class: 'rec-open', title: 'Go to the note being recorded', onClick: () => S.openNote(recorder.noteId) },
+      h('span', { class: `rec-dot ${recorder.paused ? 'paused' : ''}`, 'aria-hidden': 'true' }),
+      h('span', { class: 'rec-label' }, h('span', { class: recorder.paused ? '' : 'sr-only', text: recorder.paused ? 'Paused: ' : 'Recording: ' }), (note && note.title) || 'Untitled lecture'),
+      h('span', { class: 'rec-box-time', text: fmtTime(recorder.elapsed()) })),
+    button('Stop', () => stopRecording(), { attrs: { class: 'btn btn-small', 'aria-label': 'Stop recording' } }));
+}
+
+// A sidebar heading that folds its section away. Folded sections are remembered.
+function folded() {
+  if (!S.lib.settings.collapsed) S.lib.settings.collapsed = {};
+  return S.lib.settings.collapsed;
+}
+function sectionHead(key, label, { level = 'h2', cls = 'nav-heading', trailing = null } = {}) {
+  const open = !folded()[key];
+  const toggle = h('button', { type: 'button', class: 'nav-toggle', 'aria-expanded': String(open), 'data-sec': key,
+    onClick: () => {
+      folded()[key] = open;
+      saveLib();
+      renderSidebar();
+      const again = sidebarBody.querySelector(`[data-sec="${CSS.escape(key)}"]`);
+      if (again) again.focus();
+    } }, icon('chevron', 12), h('span', { text: label }));
+  return { open, el: h('div', { class: 'nav-heading-row' }, h(level, { class: cls }, toggle), trailing) };
 }
 
 function renderSidebar() {
@@ -108,7 +144,9 @@ function renderSidebar() {
     active.some((n) => n.pinned) ? navItem({ label: 'Pinned', iconName: 'pin', active: isFilter('pinned'), onClick: () => S.go({ kind: 'notes', filter: { type: 'pinned', id: null } }) }) : null,
   ));
 
-  sidebarBody.append(h('h2', { class: 'nav-heading', text: 'Study' }), h('ul', { class: 'nav' },
+  const study = sectionHead('study', 'Study');
+  sidebarBody.append(study.el);
+  if (study.open) sidebarBody.append(h('ul', { class: 'nav' },
     navItem({ label: 'Schedule', iconName: 'calendar', active: kind === 'schedule', count: (S.lib.sessions || []).filter((s) => s.date === todayStr()).length, onClick: () => S.go({ kind: 'schedule' }) }),
     navItem({ label: 'Master notes', iconName: 'copy', active: kind === 'master', onClick: () => S.go({ kind: 'master', courseId: S.view.filter.type === 'course' ? S.view.filter.id : null }) }),
     navItem({ label: 'Review flashcards', iconName: 'cards', active: kind === 'review', count: due, countKind: due ? 'accent' : '', onClick: () => S.go({ kind: 'review', courseId: null }) }),
@@ -119,13 +157,25 @@ function renderSidebar() {
   // Courses, grouped by term.
   const courses = S.lib.courses.filter((c) => !c.archived);
   const terms = [...new Set(courses.map((c) => c.term || ''))].sort((a, b) => (a === '' ? 1 : b === '' ? -1 : b.localeCompare(a)));
-  sidebarBody.append(h('div', { class: 'nav-heading-row' }, h('h2', { class: 'nav-heading', text: 'Courses' }), iconButton('plus', 'Add a course', () => editCourse(null), { size: 15 })));
-  if (!courses.length) sidebarBody.append(h('p', { class: 'nav-empty', text: 'Add your courses to keep each class\'s lectures, flashcards and deadlines together.' }));
-  for (const term of terms) {
-    if (terms.length > 1 || term) sidebarBody.append(h('h3', { class: 'nav-term', text: term || 'No term' }));
+  const coursesHead = sectionHead('courses', 'Courses', { trailing: iconButton('plus', 'Add a course', () => editCourse(null), { size: 15 }) });
+  sidebarBody.append(coursesHead.el);
+  if (coursesHead.open && !courses.length) sidebarBody.append(h('p', { class: 'nav-empty', text: 'Add your courses to keep each class\'s lectures, flashcards and deadlines together.' }));
+  // Folders are the course's `term` field, so courses saved before folders existed keep their grouping.
+  for (const term of coursesHead.open ? terms : []) {
+    if (terms.length > 1 || term) {
+      const more = term ? iconButton('more', `Options for folder ${term}`, () => showMenu(more, [
+        { label: 'Add a course here', icon: 'plus', onSelect: () => editCourse(null, { term }) },
+        { label: 'Rename folder…', icon: 'edit', onSelect: () => renameFolder(term) },
+      ]), { size: 15, class: 'row-more' }) : null;
+      const head = sectionHead(`folder:${term}`, term || 'No folder', { level: 'h3', cls: 'nav-term', trailing: more });
+      head.el.classList.add('nav-row');
+      sidebarBody.append(head.el);
+      if (!head.open) continue;
+    }
     sidebarBody.append(h('ul', { class: 'nav' }, courses.filter((c) => (c.term || '') === term).map((c) => {
       const more = iconButton('more', `Options for ${c.name}`, () => showMenu(more, [
         { label: 'Edit course', icon: 'edit', onSelect: () => editCourse(c) },
+        { label: 'Move to folder…', icon: 'folder', onSelect: () => moveToFolder(c) },
         { label: 'Course materials…', icon: 'book', onSelect: () => S.go({ kind: 'materials', courseId: c.id }) },
         { label: 'New master note…', icon: 'copy', onSelect: () => S.go({ kind: 'master', courseId: c.id }) },
         { label: 'Review this course', icon: 'cards', onSelect: () => S.go({ kind: 'review', courseId: c.id }) },
@@ -154,7 +204,9 @@ function renderSidebar() {
 
   const tags = tagCounts();
   if (tags.length) {
-    sidebarBody.append(h('h2', { class: 'nav-heading', text: 'Tags' }), h('ul', { class: 'nav' }, tags.slice(0, 30).map(([tag, n]) =>
+    const tagsHead = sectionHead('tags', 'Tags');
+    sidebarBody.append(tagsHead.el);
+    if (tagsHead.open) sidebarBody.append(h('ul', { class: 'nav' }, tags.slice(0, 30).map(([tag, n]) =>
       navItem({ label: `#${tag}`, iconName: 'tag', active: isFilter('tag', tag), count: n, onClick: () => S.go({ kind: 'notes', filter: { type: 'tag', id: tag } }) }))));
   }
 
@@ -168,14 +220,16 @@ function renderSidebar() {
     h('span', { text: aiOk ? `AI: ${p.label}` : 'AI not set up' }))));
 }
 
-async function editCourse(course) {
+const folderNames = () => [...new Set(S.lib.courses.map((c) => c.term).filter(Boolean))].sort();
+
+async function editCourse(course, { term = '' } = {}) {
   const out = await formDialog({
     title: course ? 'Edit course' : 'Add a course',
     submitLabel: course ? 'Save' : 'Add course',
     fields: [
       { name: 'name', label: 'Course name', value: course ? course.name : '', required: true, placeholder: 'Intro to Biology' },
       { name: 'code', label: 'Course code (optional)', value: course ? course.code : '', placeholder: 'BIO 101' },
-      { name: 'term', label: 'Term (optional)', value: course ? course.term : '', placeholder: 'Fall 2026', hint: 'Courses are grouped by term in the sidebar.' },
+      { name: 'term', label: 'Folder (optional)', value: course ? course.term : term, placeholder: 'Fall 2026', list: folderNames(), hint: 'Courses are grouped into folders in the sidebar. Type a new name to make a folder.' },
       { name: 'color', label: 'Colour', type: 'swatch', value: course ? course.color : COURSE_COLORS[S.lib.courses.length % COURSE_COLORS.length].value, options: COURSE_COLORS },
     ],
   });
@@ -188,6 +242,30 @@ async function editCourse(course) {
   }
   saveLib();
   route();
+}
+
+async function moveToFolder(course) {
+  const out = await formDialog({
+    title: `Move ${course.name}`, submitLabel: 'Move',
+    fields: [{ name: 'term', label: 'Folder', value: course.term || '', placeholder: 'Fall 2026', list: folderNames(), hint: 'Pick a folder or type a new name. Leave it empty to take the course out of its folder.' }],
+  });
+  if (!out) return;
+  course.term = out.term;
+  saveLib();
+  renderSidebar();
+}
+
+async function renameFolder(term) {
+  const out = await formDialog({
+    title: 'Rename folder', submitLabel: 'Rename',
+    fields: [{ name: 'term', label: 'Folder name', value: term, list: folderNames().filter((f) => f !== term), hint: 'Use an existing name to merge the two folders. Leave it empty to remove the folder and keep its courses.' }],
+  });
+  if (!out || out.term === term) return;
+  for (const c of S.lib.courses) if (c.term === term) c.term = out.term;
+  const f = folded();
+  if (f[`folder:${term}`]) { f[`folder:${out.term}`] = true; delete f[`folder:${term}`]; }
+  saveLib();
+  renderSidebar();
 }
 
 async function removeCourse(course) {
@@ -213,7 +291,6 @@ function filterTitle() {
 }
 
 function createNote() {
-  if (recorder.active) { toast('Stop recording before starting another note.', 'error'); return; }
   const { filter } = S.view;
   const note = newNote({ courseId: S.view.kind === 'notes' && filter.type === 'course' ? filter.id : null });
   if (S.view.kind === 'notes' && !['all', 'course'].includes(filter.type)) S.view.filter = { type: 'all', id: null };
@@ -236,17 +313,22 @@ function renderList() {
   const q = S.view.query.trim();
   clear($list);
   $list.append(h('header', { class: 'list-head' },
-    h('h1', { text: q ? 'Search results' : filterTitle() }),
+    h('div', { class: 'list-title-row' }, h('h1', { text: q ? 'Search results' : filterTitle() }),
+      iconButton('chevron', 'Hide notes list', () => togglePane('list'), { class: 'side-toggle hide-list', size: 16 })),
     h('span', { class: 'footnote', 'aria-live': 'polite', text: `${notes.length} note${notes.length === 1 ? '' : 's'}${q ? ` for "${q}"` : ''}` })));
 
   if (!notes.length) {
-    $list.append(h('p', { class: 'list-empty', text: q ? 'Nothing matches. Search looks in titles, typed notes and transcripts.' : S.view.filter.type === 'archive' ? 'Archived notes appear here.' : 'No notes here yet.' }));
+    const archive = S.view.filter.type === 'archive';
+    $list.append(h('div', { class: 'list-empty' },
+      h('p', { text: q ? 'Nothing matches. Search looks in titles, typed notes and transcripts.' : archive ? 'Archived notes appear here.' : 'No notes here yet.' }),
+      q || archive ? null : button('New note', () => createNote(), { iconName: 'plus', attrs: { class: 'btn btn-small' } })));
     return;
   }
   $list.append(h('ul', { class: 'note-list' }, notes.map((n) => {
     const course = courseById(n.courseId);
     let preview = null;
-    if (q) {
+    if (n.locked) preview = h('span', { class: 'note-snippet', text: 'Locked note' });
+    else if (q) {
       const hit = snippet(n.text, q) || snippet((n.transcript || []).map((s) => s.text).join(' '), q);
       if (hit) preview = h('span', { class: 'note-snippet' }, hit.before, h('mark', { text: hit.match }), hit.after);
     }
@@ -298,12 +380,15 @@ function renderWelcome() {
 // ================================================================= boot ===
 
 bus.on('toast', ({ message, kind }) => toast(message, kind));
-bus.on('library', () => { renderSidebar(); renderList(); });
-bus.on('recording', () => renderList());
+bus.on('library', () => { renderSidebar(); renderList(); renderRecPill(); });
+bus.on('recording', () => { renderList(); renderRecPill(); });
+setInterval(() => { const t = recBox && recBox.querySelector('.rec-box-time'); if (t && recorder.active) t.textContent = fmtTime(recorder.elapsed()); }, 1000);
 bus.on('transcription', () => renderList());
 
 api.onMenu((action) => {
   if (document.querySelector('dialog[open]')) return;
+  // Start/stop shortcut: stops the running recording whatever view is open.
+  if (action === 'toggle-record' && recorder.active) { stopRecording(); return; }
   if (action === 'new-note') createNote();
   else if (action === 'new-course') editCourse(null);
   else if (action === 'master') S.go({ kind: 'master' });

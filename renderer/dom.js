@@ -159,7 +159,8 @@ export function confirmDialog({ title, body, confirmLabel = 'Confirm', danger = 
   }).then((v) => v === true);
 }
 
-// fields: [{ name, label, type: 'text'|'date'|'select'|'swatch'|'textarea', value, options, required, placeholder, hint }]
+// fields: [{ name, label, type: 'text'|'date'|'select'|'swatch'|'textarea', value, options, required, placeholder, hint, list }]
+// list: suggestions offered under a text field.
 export function formDialog({ title, fields, submitLabel = 'Save', intro = null }) {
   return openDialog((dialog, close) => {
     const id = `dlg-${Date.now()}`;
@@ -181,10 +182,11 @@ export function formDialog({ title, fields, submitLabel = 'Save', intro = null }
         controls[f.name] = { get value() { const c = control.querySelector('input:checked'); return c ? c.value : f.value; } };
         return h('div', { class: 'field' }, h('span', { text: f.label }), control);
       } else {
-        control = h('input', { id: fid, class: 'input', type: f.type || 'text', value: f.value || '', placeholder: f.placeholder || '', required: !!f.required, autocomplete: 'off' });
+        control = h('input', { id: fid, class: 'input', type: f.type || 'text', value: f.value || '', placeholder: f.placeholder || '', required: !!f.required, autocomplete: 'off', list: f.list ? `${fid}-list` : null });
       }
       controls[f.name] = control;
-      return h('label', { class: 'field', for: fid }, h('span', { text: f.label }), control, f.hint ? h('small', { text: f.hint }) : null);
+      const suggestions = f.list ? h('datalist', { id: `${fid}-list` }, f.list.map((v) => h('option', { value: v }))) : null;
+      return h('label', { class: 'field', for: fid }, h('span', { text: f.label }), control, suggestions, f.hint ? h('small', { text: f.hint }) : null);
     });
     const form = h('form', { method: 'dialog', novalidate: false, onSubmit: (e) => {
       e.preventDefault();

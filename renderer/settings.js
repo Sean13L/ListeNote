@@ -4,6 +4,7 @@ import { api, S, saveLib, applyAppearance, bus } from './state.js';
 import { h, clear, button, toast, errorMessage, confirmDialog } from './dom.js';
 import { runAI, job } from './ai.js';
 import { TEST_PROMPT } from './lib/prompts.js';
+import { recorder } from './audio.js';
 
 const LANGUAGES = ['english', 'spanish', 'french', 'german', 'italian', 'portuguese', 'dutch', 'polish', 'turkish', 'russian', 'ukrainian', 'arabic', 'hebrew', 'hindi', 'bengali', 'urdu', 'vietnamese', 'thai', 'indonesian', 'malay', 'tagalog', 'chinese', 'japanese', 'korean', 'swedish', 'norwegian', 'danish', 'finnish', 'greek', 'czech', 'romanian', 'hungarian'];
 const cap = (s) => s[0].toUpperCase() + s.slice(1);
@@ -196,7 +197,7 @@ export async function mountSettings(container) {
   // ---- appearance ----
   const themeSelect = h('select', { class: 'input', onChange: () => { set('theme', themeSelect.value); applyAppearance(); } },
     [['system', 'Match system'], ['light', 'Light'], ['dark', 'Dark']].map(([v, l]) => h('option', { value: v, selected: st.theme === v, text: l })));
-  const accents = [['indigo', 'Indigo'], ['forest', 'Forest'], ['crimson', 'Crimson'], ['ocean', 'Ocean']];
+  const accents = [['indigo', 'Blue'], ['forest', 'Forest'], ['crimson', 'Crimson'], ['ocean', 'Ocean']];
   const accentGroup = h('div', { class: 'swatches', role: 'radiogroup', 'aria-label': 'Accent colour' }, accents.map(([v, l]) =>
     h('label', { class: `swatch accent-${v}` }, h('input', { type: 'radio', name: 'accent', value: v, checked: st.accent === v, onChange: () => { set('accent', v); applyAppearance(); } }), h('span', { class: 'sr-only', text: l }))));
 
@@ -217,6 +218,7 @@ export async function mountSettings(container) {
       field('Skip buttons jump by', skipSelect)),
 
     section('Recording', 'Choose what to record next to the Record button: microphone, computer audio (Zoom, Teams, Meet, YouTube), or both.',
+      recorder.active ? h('div', { class: 'notice' }, h('p', { text: 'A recording is running. Changes here apply to your next recording.' })) : null,
       field('Recording quality', pick('recordQuality', [['space', 'Space saver (16 kHz, about 11 MB per hour)'], ['good', 'Good (44.1 kHz, about 29 MB per hour)'], ['best', 'Best (48 kHz, about 58 MB per hour)']])),
       field('Microphone', pick('micId', named('audioinput', 'System default'))),
       field('Play recordings through', pick('outputId', named('audiooutput', 'System default'))),

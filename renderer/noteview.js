@@ -37,7 +37,8 @@ export function currentNoteId() {
 export function unmountNote() {
   if (!ctx) return;
   for (const off of ctx.offs) off();
-  relock(ctx.note);
+  // A locked note stays open while it records, or its live transcript would be dropped; stopRecording relocks it.
+  if (!(recorder.active && recorder.noteId === ctx.note.id)) relock(ctx.note);
   cancelAnimationFrame(ctx.raf);
   if (ctx.player) ctx.player.destroy();
   ctx = null;
@@ -76,7 +77,9 @@ export function mountNote(container, note, { viewer = false } = {}) {
   [['mic', 'Microphone'], ['both', 'Mic + computer audio'], ['system', 'Computer audio only']].map(([v, l]) => h('option', { value: v, selected: (S.lib.settings.recordSource || 'mic') === v, text: l })));
   c.attachRow = h('div', { class: 'attach-row' });
   const head = h('header', { class: 'note-head' },
-    h('div', { class: 'note-head-row' }, h('div', { class: 'title-wrap' }, title, c.moreBtn), viewer ? null : [sourceSelect, c.recordBtn]),
+    h('div', { class: 'note-head-row' },
+      viewer ? null : iconButton('chevron', 'Show notes list', () => togglePane('list'), { class: 'side-toggle show-list', size: 16 }),
+      h('div', { class: 'title-wrap' }, title, c.moreBtn), viewer ? null : [sourceSelect, c.recordBtn]),
     h('div', { class: 'note-meta' }, courseSelect,
       viewer ? h('span', { class: 'meta-text', text: fmtDate(note.created, { weekday: true }) })
         : c.dateBtn = h('button', { type: 'button', class: 'meta-text meta-date', title: 'Change the lecture date', onClick: () => changeDate() }, fmtDate(note.created, { weekday: true })),
@@ -123,12 +126,30 @@ export function mountNote(container, note, { viewer = false } = {}) {
         e.preventDefault();
         const next = TABS[(i + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length];
         selectTab(next.id);
-        c.tabButtons[TABS.indexOf(next)].focus();
+        const btn = c.tabButtons[TABS.indexOf(next)];
+        (btn.hidden ? c.moreTab : btn).focus();
       }
     },
   }, t.label));
   c.panel = h('div', { class: 'panel-body', role: 'tabpanel', id: 'tabpanel', tabindex: '0' });
-  const side = h('aside', { class: 'panel', 'aria-label': 'Study tools' }, h('div', { class: 'tabs-row' }, h('div', { class: 'tabs', role: 'tablist', 'aria-label': 'Study tools' }, c.tabButtons),
+  // Tabs that do not fit the panel's width move into a More menu, kept apart from the hide arrow.
+  const tabList = h('div', { class: 'tabs', role: 'tablist', 'aria-label': 'Study tools' }, c.tabButtons);
+  c.moreTab = h('button', { type: 'button', class: 'tab tab-more', 'aria-haspopup': 'menu', hidden: true,
+    onClick: () => showMenu(c.moreTab, TABS.filter((t, i) => c.tabButtons[i].hidden).map((t) => ({ label: t.label, checked: c.tab === t.id, onSelect: () => selectTab(t.id) }))) },
+  h('span', { text: 'More' }), icon('chevron', 12));
+  c.fitTabs = () => {
+    for (const b of c.tabButtons) b.hidden = false;
+    c.moreTab.hidden = true;
+    for (let i = TABS.length - 1; i > 0 && tabList.scrollWidth > tabList.clientWidth; i--) {
+      c.tabButtons[i].hidden = true;
+      c.moreTab.hidden = false;
+    }
+    c.moreTab.classList.toggle('current', TABS.some((t, i) => c.tabButtons[i].hidden && t.id === c.tab));
+  };
+  const fit = new ResizeObserver(() => c.fitTabs());
+  fit.observe(tabList);
+  c.offs.push(() => fit.disconnect());
+  const side = h('aside', { class: 'panel', 'aria-label': 'Study tools' }, h('div', { class: 'tabs-row' }, tabList, c.moreTab,
     iconButton('chevron', 'Hide study panel', () => togglePane('panel'), { class: 'side-toggle hide-panel', size: 16 })), c.panel);
 
   c.transport = h('footer', { class: 'transport' });
@@ -283,6 +304,8 @@ function renderRecordButton() {
   c.recordBtn.classList.toggle('is-recording', mine);
   c.recordBtn.append(icon(mine ? 'stop' : 'mic', 16), h('span', { text: mine ? 'Stop' : 'Record' }));
   c.recordBtn.setAttribute('aria-label', mine ? 'Stop recording' : 'Start recording');
+  // The record bar below holds Stop while this note records; one Stop control is enough.
+  c.recordBtn.hidden = mine;
 }
 
 export async function toggleRecord() {
@@ -326,9 +349,12 @@ export async function toggleRecord() {
   }
 }
 
-async function stopRecording() {
-  const c = ctx;
-  const { note } = c;
+// Works from any view: the recording note need not be the one on screen.
+let stopping = false;
+export async function stopRecording() {
+  const note = S.notes[recorder.noteId];
+  if (!note || stopping) return;
+  stopping = true;
   try {
     const result = await recorder.stop();
     note.audio = { ext: result.ext, mime: result.mime, duration: result.duration };
@@ -336,12 +362,17 @@ async function stopRecording() {
     note.updated = Date.now();
     saveNote(note.id, { now: true });
     bus.emit('library');
-    if (ctx === c) { renderMeta(); renderPanel(); await loadPlayer(); }
+    const c = ctx;
+    if (c && c.note === note) { renderMeta(); renderPanel(); await loadPlayer(); }
+    else relock(note);
+    const sealed = note.locked && !note._open;
     if (result.liveTranscript) toast('Recording and live transcript saved.');
-    else if (S.lib.settings.autoTranscribe) startTranscription(note);
-    else toast('Recording saved. Open the Transcript tab to transcribe it.');
+    else if (S.lib.settings.autoTranscribe && !sealed) startTranscription(note);
+    else toast(sealed ? 'Recording saved. Open the note to transcribe it.' : 'Recording saved. Open the Transcript tab to transcribe it.');
   } catch (err) {
     toast(errorMessage(err), 'error');
+  } finally {
+    stopping = false;
   }
 }
 
@@ -786,11 +817,11 @@ async function toWebPage(note, c) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(note.title || 'Lecture notes')}</title>
 <style>
-body{font:16px/1.6 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif;max-width:760px;margin:0 auto;padding:24px 16px 120px;color:#1b1a1f;background:#fffdf9}
-h1{font:600 28px Georgia,serif;margin:0 0 4px}h2{font:600 19px Georgia,serif;margin:28px 0 8px;border-bottom:1px solid #ddd;padding-bottom:4px}
-.meta{color:#5c5a66}.t{display:inline-block;min-width:48px;font:600 12px sans-serif;color:#4338ca;background:#e9e7fb;border-radius:5px;padding:0 5px;margin-right:8px;text-decoration:none}
+body{font:16px/1.6 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif;max-width:760px;margin:0 auto;padding:24px 16px 120px;color:#1f2328;background:#ffffff}
+h1{font:700 28px -apple-system,"Segoe UI",Helvetica,Arial,sans-serif;letter-spacing:-.015em;margin:0 0 4px}h2{font:650 19px -apple-system,"Segoe UI",Helvetica,Arial,sans-serif;margin:28px 0 8px;border-bottom:1px solid #ddd;padding-bottom:4px}
+.meta{color:#59636e}.t{display:inline-block;min-width:48px;font:600 12px sans-serif;color:#2563eb;background:#eaf1fe;border-radius:5px;padding:0 5px;margin-right:8px;text-decoration:none}
 img{max-width:100%}mark{background:#ffe58a}audio{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;width:min(720px,calc(100% - 32px))}
-@media(prefers-color-scheme:dark){body{background:#17161a;color:#ece9e4}.meta{color:#aaa6b3}.t{background:#2b2950;color:#b9b4ff}mark{background:#6b5a12}}
+@media(prefers-color-scheme:dark){body{background:#1b1c1e;color:#ececee}.meta{color:#a3a8af}.t{background:#1d2a44;color:#7eaaff}mark{background:#5e4f10}}
 </style></head><body>${body.innerHTML}${audio}
 <script>document.addEventListener('click',function(e){var t=e.target.closest('[data-t]');var a=document.getElementById('a');if(!t||!a)return;e.preventDefault();a.currentTime=+t.dataset.t;a.play();});</script>
 </body></html>`;
@@ -823,6 +854,7 @@ function selectTab(id) {
     c.tabButtons[i].tabIndex = selected ? 0 : -1;
   }
   c.panel.setAttribute('aria-labelledby', `tab-${id}`);
+  if (c.fitTabs) c.fitTabs();
   renderPanel();
 }
 
@@ -983,8 +1015,10 @@ function renderTranscript() {
         chip = h('button', { type: 'button', class: 'speaker', 'aria-haspopup': 'menu', title: 'Assign speaker', onClick: () => speakerMenu(chip, seg) }, note.speakers[seg.spk] || `Speaker ${seg.spk + 1}`);
       }
       const el = h('div', { class: 'tr-row' },
-        h('button', { type: 'button', class: 'ts', disabled: !playable, 'aria-label': `Play from ${fmtTime(seg.s)}`, onClick: () => seek(seg.s) }, fmtTime(seg.s)),
-        h('span', { class: 'tr-text' }, chip, seg.text));
+        h('div', { class: 'tr-meta' },
+          h('button', { type: 'button', class: 'ts', disabled: !playable, 'aria-label': `Play from ${fmtTime(seg.s)}`, onClick: () => seek(seg.s) }, fmtTime(seg.s)),
+          chip ? [h('span', { 'aria-hidden': 'true', text: '·' }), chip] : null),
+        h('span', { class: 'tr-text' }, seg.text));
       rowsEl.append(el);
       c.trRows.push({ s: seg.s, el, spk: seg.spk });
     }
