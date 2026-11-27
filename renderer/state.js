@@ -171,9 +171,10 @@ export function visibleNotes() {
     else if (filter.type === 'tag') list = list.filter((n) => (n.tags || []).includes(filter.id));
   }
   if (q) {
+    // A locked note matches on its title only, even while a recording keeps it open in memory.
     list = list.filter((n) => (n.title || '').toLowerCase().includes(q)
-      || (n.text || '').toLowerCase().includes(q)
-      || (n.transcript || []).some((s) => s.text.toLowerCase().includes(q)));
+      || (!n.locked && (n.text || '').toLowerCase().includes(q))
+      || (!n.locked && (n.transcript || []).some((s) => s.text.toLowerCase().includes(q))));
   }
   return list.sort((a, b) => (b.pinned - a.pinned) || (b.updated - a.updated));
 }

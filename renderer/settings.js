@@ -16,6 +16,9 @@ export async function mountSettings(container) {
   S.providers = await api.llmDetect();
   const info = await api.appInfo();
   if (!page.isConnected) return;
+  // Follows recordings that start or stop while Settings is open; drops itself once the page is gone.
+  const recNotice = h('div', { class: 'notice', hidden: !recorder.active }, h('p', { text: 'A recording is running. Changes here apply to your next recording.' }));
+  const offRec = bus.on('recording', () => { if (!recNotice.isConnected) offRec(); else recNotice.hidden = !recorder.active; });
   const st = S.lib.settings;
   const set = (key, value) => { st[key] = value; saveLib(); bus.emit('library'); };
 
@@ -218,7 +221,7 @@ export async function mountSettings(container) {
       field('Skip buttons jump by', skipSelect)),
 
     section('Recording', 'Choose what to record next to the Record button: microphone, computer audio (Zoom, Teams, Meet, YouTube), or both.',
-      recorder.active ? h('div', { class: 'notice' }, h('p', { text: 'A recording is running. Changes here apply to your next recording.' })) : null,
+      recNotice,
       field('Recording quality', pick('recordQuality', [['space', 'Space saver (16 kHz, about 11 MB per hour)'], ['good', 'Good (44.1 kHz, about 29 MB per hour)'], ['best', 'Best (48 kHz, about 58 MB per hour)']])),
       field('Microphone', pick('micId', named('audioinput', 'System default'))),
       field('Play recordings through', pick('outputId', named('audiooutput', 'System default'))),

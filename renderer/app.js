@@ -9,7 +9,7 @@ import { separator, applyLayout, togglePane } from './layout.js';
 import { mountSchedule, mountMaster, sessionStartMs, openSession } from './schedule.js';
 import { todayStr } from './lib/util.js';
 import { h, clear, icon, iconButton, button, toast, confirmDialog, formDialog, showMenu, emptyState, errorMessage } from './dom.js';
-import { mountNote, unmountNote, currentNoteId, toggleRecord, stopRecording, togglePlay, playFromCaret, importAudio, seek, openMoreMenu } from './noteview.js';
+import { mountNote, unmountNote, currentNoteId, toggleRecord, stopRecording, isStopping, togglePlay, playFromCaret, importAudio, seek, openMoreMenu } from './noteview.js';
 import { mountReview, mountAssignments, mountGuides, unmountStudy } from './study.js';
 import { mountSettings } from './settings.js';
 import { recorder, transcription } from './audio.js';
@@ -261,9 +261,11 @@ async function renameFolder(term) {
     fields: [{ name: 'term', label: 'Folder name', value: term, list: folderNames().filter((f) => f !== term), hint: 'Use an existing name to merge the two folders. Leave it empty to remove the folder and keep its courses.' }],
   });
   if (!out || out.term === term) return;
+  const isNew = out.term && !folderNames().includes(out.term);
   for (const c of S.lib.courses) if (c.term === term) c.term = out.term;
   const f = folded();
-  if (f[`folder:${term}`]) { f[`folder:${out.term}`] = true; delete f[`folder:${term}`]; }
+  if (f[`folder:${term}`] && isNew) f[`folder:${out.term}`] = true;
+  delete f[`folder:${term}`];
   saveLib();
   renderSidebar();
 }
@@ -313,7 +315,7 @@ function renderList() {
   const q = S.view.query.trim();
   clear($list);
   $list.append(h('header', { class: 'list-head' },
-    h('div', { class: 'list-title-row' }, h('h1', { text: q ? 'Search results' : filterTitle() }),
+    h('div', { class: 'list-title-row' }, h('h1', null, S.view.filter.type === 'course' && !q && courseById(S.view.filter.id) ? h('span', { class: 'dot', style: { '--dot': courseById(S.view.filter.id).color } }) : null, q ? 'Search results' : filterTitle()),
       iconButton('chevron', 'Hide notes list', () => togglePane('list'), { class: 'side-toggle hide-list', size: 16 })),
     h('span', { class: 'footnote', 'aria-live': 'polite', text: `${notes.length} note${notes.length === 1 ? '' : 's'}${q ? ` for "${q}"` : ''}` })));
 
@@ -337,7 +339,7 @@ function renderList() {
     const menuBtn = iconButton('more', `Actions for ${n.title || 'Untitled lecture'}`, () => noteMenu(n.id), { class: 'card-more', size: 16, attrs: { 'aria-haspopup': 'menu', 'data-note': n.id } });
     return h('li', { class: 'note-row' }, menuBtn, h('button', { type: 'button', class: `note-item ${n.id === S.noteId ? 'active' : ''}`, 'aria-current': n.id === S.noteId ? 'true' : null, onClick: () => S.openNote(n.id) },
       h('span', { class: 'note-item-top' },
-        course ? h('span', { class: 'dot', style: { '--dot': course.color } }) : null,
+        course && S.view.filter.type !== 'course' ? h('span', { class: 'dot', style: { '--dot': course.color } }) : null,
         h('span', { class: 'note-item-title', text: n.title || 'Untitled lecture' }),
         n.pinned ? h('span', { class: 'pin-flag' }, icon('pin', 13), h('span', { class: 'sr-only', text: 'Pinned' })) : null),
       preview,
@@ -388,7 +390,7 @@ bus.on('transcription', () => renderList());
 api.onMenu((action) => {
   if (document.querySelector('dialog[open]')) return;
   // Start/stop shortcut: stops the running recording whatever view is open.
-  if (action === 'toggle-record' && recorder.active) { stopRecording(); return; }
+  if (action === 'toggle-record' && (recorder.active || isStopping())) { stopRecording(); return; }
   if (action === 'new-note') createNote();
   else if (action === 'new-course') editCourse(null);
   else if (action === 'master') S.go({ kind: 'master' });

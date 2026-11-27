@@ -1,8 +1,15 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-27T21:31:57+00:00",
+  "generatedAt": "2026-11-27T22:23:34+00:00",
   "title": "Design System: ListeNote",
   "extensions": {
+    "route": {
+      "gutter": "92px",
+      "gutterTight": "88px",
+      "line": "2px, color-mix(in oklab, var(--accent) 45%, transparent), at gutter - 21px",
+      "stop": "10px circle, paper fill, 2px accent outline; filled accent and accent-soft line tint for the playing line and the caret-linked line (constructed stylesheet keyed by data-t, since the CSP blocks inline style); newest while recording filled record red with live-halo",
+      "time": "route-time typography, right-aligned in 48px, muted; accent underline on hover; danger 600 for the newest while recording"
+    },
     "colorMeta": {
       "paper": {
         "role": "neutral",
@@ -58,18 +65,35 @@
       "sidebar-grey": {
         "role": "neutral",
         "displayName": "Sidebar Grey",
-        "canonical": "#f5f6f7",
+        "canonical": "#f4f5f7",
         "cssVar": "--side",
         "theme": "light",
         "tonalRamp": [
-          "#232629",
-          "#3a4045",
-          "#515962",
-          "#67737f",
-          "#808c98",
-          "#a6adb5",
-          "#cdd1d5",
+          "#22252a",
+          "#383d48",
+          "#4d5565",
+          "#616d84",
+          "#7b869e",
+          "#a3aab8",
+          "#cccfd6",
           "#f1f2f3"
+        ]
+      },
+      "list-grey": {
+        "role": "neutral",
+        "displayName": "List Grey",
+        "canonical": "#fafafb",
+        "cssVar": "--list",
+        "theme": "light",
+        "tonalRamp": [
+          "#232329",
+          "#3a3a45",
+          "#515162",
+          "#67677f",
+          "#808098",
+          "#a6a6b5",
+          "#cdcdd5",
+          "#f1f1f3"
         ]
       },
       "ink": {
@@ -246,7 +270,7 @@
         "role": "secondary",
         "displayName": "Danger Fill",
         "canonical": "#c4291c",
-        "cssVar": "--danger-fill",
+        "cssVar": "--danger-bg",
         "theme": "light",
         "tonalRamp": [
           "#3a1613",
@@ -425,6 +449,23 @@
           "#6d7079",
           "#868992",
           "#aaacb1",
+          "#cfd0d3",
+          "#f2f2f3"
+        ]
+      },
+      "list-grey-dark": {
+        "role": "neutral",
+        "displayName": "List Grey (dark)",
+        "canonical": "#1f2023",
+        "cssVar": "--list",
+        "theme": "dark",
+        "tonalRamp": [
+          "#252528",
+          "#3d3e43",
+          "#55575e",
+          "#6c6f79",
+          "#868993",
+          "#a9abb2",
           "#cfd0d3",
           "#f2f2f3"
         ]
@@ -770,7 +811,7 @@
       },
       "meta": {
         "displayName": "Meta",
-        "purpose": "Card snippets, note meta line, small buttons."
+        "purpose": "Note-row snippets, note meta line, small buttons."
       },
       "caption": {
         "displayName": "Caption",
@@ -778,11 +819,15 @@
       },
       "label": {
         "displayName": "Label",
-        "purpose": "Sidebar section headings, time chips, transcript speaker and time."
+        "purpose": "Sidebar section headings and inline time links."
+      },
+      "route-time": {
+        "displayName": "Route Time",
+        "purpose": "Mono tabular time beside each stamped line in the editor gutter; transcript times use it at 12px."
       },
       "code": {
         "displayName": "Code",
-        "purpose": "Inline code in rendered markdown only."
+        "purpose": "Inline code in rendered markdown."
       }
     },
     "shadows": [
@@ -793,9 +838,14 @@
         "purpose": "Menus, dialogs, toasts, the zoomed diagram and the review flashcard."
       },
       {
-        "name": "selection-ring",
-        "value": "0 0 0 1px var(--accent)",
-        "purpose": "Doubles the open note card's 1px accent border without shifting layout."
+        "name": "hairline-ring",
+        "value": "0 0 0 1px var(--line)",
+        "purpose": "Outlines the open note row without a border or layout shift."
+      },
+      {
+        "name": "live-halo",
+        "value": "0 0 0 3px var(--danger-soft)",
+        "purpose": "Rings the newest route stop while recording."
       },
       {
         "name": "dialog-backdrop",
@@ -807,7 +857,7 @@
       {
         "name": "state-fade",
         "value": "150ms ease",
-        "purpose": "Border-colour changes on inputs and cards, divider highlight, chevron rotation."
+        "purpose": "Border and background changes on inputs and note rows, divider highlight, chevron rotation."
       },
       {
         "name": "progress",
@@ -817,7 +867,7 @@
       {
         "name": "record-pulse",
         "value": "opacity 1.4s ease-in-out infinite",
-        "purpose": "The recording dot in the record bar; static in the sidebar box."
+        "purpose": "The recording dot in the recording band; static in the sidebar box."
       },
       {
         "name": "spinner",
@@ -834,7 +884,7 @@
       {
         "name": "editor-tight",
         "value": "1180px",
-        "purpose": "Editor gutter tightens."
+        "purpose": "Route gutter tightens from 92px to 88px."
       },
       {
         "name": "panel-below",
@@ -881,14 +931,6 @@
       "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 34px; padding: 0 13px; border-radius: 8px; border: 1px solid var(--accent-bg, #2563eb); background: var(--accent-bg, #2563eb); color: var(--on-accent, #ffffff); font: 500 14px/1.5 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); cursor: pointer; } .ds-btn-primary:hover { filter: brightness(1.08); } .ds-btn-primary:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 2px; }"
     },
     {
-      "name": "Danger Button",
-      "kind": "button",
-      "refersTo": "button-danger",
-      "description": "Destructive or stopping action (Stop, Delete).",
-      "html": "<button class=\"ds-btn-danger\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><rect x=\"6\" y=\"6\" width=\"12\" height=\"12\" rx=\"2\"/></svg><span>Stop</span></button>",
-      "css": ".ds-btn-danger { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 13px; border-radius: 8px; border: 1px solid var(--danger-bg, #c4291c); background: var(--danger-bg, #c4291c); color: #ffffff; font: 500 14px/1.5 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); cursor: pointer; } .ds-btn-danger:hover { filter: brightness(1.08); } .ds-btn-danger:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 2px; }"
-    },
-    {
       "name": "Text Input",
       "kind": "input",
       "refersTo": "input",
@@ -900,66 +942,76 @@
       "name": "Sidebar Navigation",
       "kind": "nav",
       "refersTo": "nav-item",
-      "description": "Sidebar rows on the grey ground; the active row is accent on blue wash.",
-      "html": "<nav class=\"ds-nav\"><div class=\"ds-nav-h\">Courses</div><button class=\"ds-nav-item\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 3h9l4 4v14H6z\"/><path d=\"M9 12h6M9 16h6\"/></svg><span>All notes</span><span class=\"ds-count\">3</span></button><button class=\"ds-nav-item is-active\"><span class=\"ds-dot\"></span><span>CS135</span><span class=\"ds-count\">3</span></button><button class=\"ds-nav-item\"><span class=\"ds-dot\" style=\"--dot:#1a7f4b\"></span><span>MATH137</span></button></nav>",
-      "css": ".ds-nav { display: flex; flex-direction: column; width: 240px; padding: 8px 10px; background: var(--side, #f5f6f7); font: 14px/1.5 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); } .ds-nav-h { font-weight: 600; font-size: 12px; color: var(--muted, #59636e); padding: 12px 10px 5px; } .ds-nav-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 10px; border: 0; border-radius: 7px; background: none; color: var(--ink, #1f2328); font: inherit; text-align: left; cursor: pointer; } .ds-nav-item svg { color: var(--muted, #59636e); } .ds-nav-item span:nth-child(2) { flex: 1; } .ds-nav-item:hover { background: var(--line, #e5e7ea); } .ds-nav-item.is-active { background: var(--accent-soft, #eaf1fe); color: var(--accent, #2563eb); font-weight: 600; } .ds-nav-item:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 2px; } .ds-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--dot, var(--accent-bg, #2563eb)); } .ds-count { font-size: 12px; color: var(--muted, #59636e); font-variant-numeric: tabular-nums; font-weight: 400; }"
+      "description": "Sidebar rows on the grey ground with 12x4 course line markers; the active row is accent on blue wash.",
+      "html": "<nav class=\"ds-nav\"><div class=\"ds-nav-h\">Courses</div><button class=\"ds-nav-item\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 3h9l4 4v14H6z\"/><path d=\"M9 12h6M9 16h6\"/></svg><span>All notes</span><span class=\"ds-count\">3</span></button><button class=\"ds-nav-item is-active\"><span class=\"ds-mark\"></span><span>CS135</span><span class=\"ds-count\">3</span></button><button class=\"ds-nav-item\"><span class=\"ds-mark\" style=\"--dot:#16723f\"></span><span>MATH137</span></button></nav>",
+      "css": ".ds-nav { display: flex; flex-direction: column; width: 240px; padding: 8px 10px; background: var(--side, #f4f5f7); font: 14px/1.5 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); } .ds-nav-h { font-weight: 600; font-size: 12px; color: var(--muted, #59636e); padding: 12px 10px 5px; } .ds-nav-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 10px; border: 0; border-radius: 7px; background: none; color: var(--ink, #1f2328); font: inherit; text-align: left; cursor: pointer; } .ds-nav-item svg { color: var(--muted, #59636e); } .ds-nav-item span:nth-child(2) { flex: 1; } .ds-nav-item:hover { background: var(--line, #e5e7ea); } .ds-nav-item.is-active { background: var(--accent-soft, #eaf1fe); color: var(--accent, #2563eb); font-weight: 600; } .ds-nav-item:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 2px; } .ds-mark { width: 12px; height: 4px; border-radius: 2px; background: var(--dot, var(--accent-bg, #2563eb)); flex: none; } .ds-count { font-size: 12px; color: var(--muted, #59636e); font-variant-numeric: tabular-nums; font-weight: 400; }"
     },
     {
       "name": "Study Panel Tabs",
       "kind": "nav",
       "refersTo": "tab",
-      "description": "Underlined tabs; those that do not fit move into a More tab, which takes the selected look when it holds the current tab.",
-      "html": "<div class=\"ds-tabs-row\"><div class=\"ds-tabs\" role=\"tablist\"><button class=\"ds-tab\" role=\"tab\" aria-selected=\"false\">Transcript</button><button class=\"ds-tab\" role=\"tab\" aria-selected=\"false\">Summary</button><button class=\"ds-tab\" role=\"tab\" aria-selected=\"false\">Ask</button></div><button class=\"ds-tab ds-tab-more is-current\" aria-haspopup=\"menu\">More <svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m6 9 6 6 6-6\"/></svg></button></div>",
-      "css": ".ds-tabs-row { display: flex; align-items: flex-end; width: 340px; border-bottom: 1px solid var(--line, #e5e7ea); } .ds-tabs { display: flex; flex: 1; min-width: 0; overflow: hidden; padding: 6px 4px 0 8px; } .ds-tab-more { display: inline-flex; align-items: center; gap: 3px; flex: none; margin-right: 6px; } .ds-tab-more.is-current { color: var(--accent, #2563eb); border-bottom-color: var(--accent, #2563eb); font-weight: 600; } .ds-tab { border: 0; background: none; padding: 8px 7px 9px; margin-bottom: -1px; border-bottom: 2px solid transparent; color: var(--muted, #59636e); font: 500 13.5px/1.5 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); cursor: pointer; } .ds-tab:hover { color: var(--ink, #1f2328); } .ds-tab[aria-selected=\"true\"] { color: var(--accent, #2563eb); border-bottom-color: var(--accent, #2563eb); font-weight: 600; } .ds-tab:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 2px; }"
+      "description": "Soft-filled tabs on one row; tabs that do not fit move into More, which takes the selected fill when it holds the current tab.",
+      "html": "<div class=\"ds-tabs-row\"><div class=\"ds-tabs\" role=\"tablist\"><button class=\"ds-tab\" role=\"tab\" aria-selected=\"true\">Transcript</button><button class=\"ds-tab\" role=\"tab\" aria-selected=\"false\">Summary</button><button class=\"ds-tab\" role=\"tab\" aria-selected=\"false\">Ask</button></div><button class=\"ds-tab ds-tab-more\" aria-haspopup=\"menu\">More <svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m6 9 6 6 6-6\"/></svg></button></div>",
+      "css": ".ds-tabs-row { display: flex; align-items: center; width: 340px; padding: 0 4px 0 8px; border-bottom: 1px solid var(--line, #e5e7ea); } .ds-tabs { display: flex; flex: 1; min-width: 0; overflow: hidden; } .ds-tab { border: 0; background: none; padding: 5px 7px; margin: 6px 0; border-radius: 10px; color: var(--muted, #59636e); font: 500 13.5px/1.5 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); white-space: nowrap; cursor: pointer; } .ds-tab:hover { color: var(--ink, #1f2328); background: var(--sunken, #f5f6f7); } .ds-tab[aria-selected=\"true\"], .ds-tab-more.is-current { color: var(--accent, #2563eb); background: var(--accent-soft, #eaf1fe); font-weight: 600; } .ds-tab-more { display: inline-flex; align-items: center; gap: 3px; flex: none; } .ds-tab:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 2px; }"
     },
     {
-      "name": "Note Card",
+      "name": "Note Row",
       "kind": "card",
-      "refersTo": "note-card",
-      "description": "A note in the list; the open one is outlined in the accent.",
-      "html": "<div class=\"ds-cards\"><button class=\"ds-note\"><span class=\"ds-note-t\">Assignment 6 review</span><span class=\"ds-note-s\">Common mistakes in Q3 and how marks were lost.</span><span class=\"ds-note-m\">Nov 20, 2026 · 52:06</span></button><button class=\"ds-note is-active\"><span class=\"ds-note-t\">Structural recursion on lists</span><span class=\"ds-note-s\">Template follows the data definition.</span><span class=\"ds-note-m\">Nov 27, 2026 <span class=\"ds-badge\">Recording</span></span></button></div>",
-      "css": ".ds-cards { display: flex; flex-direction: column; gap: 8px; width: 260px; font: 14px/1.5 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); } .ds-note { display: flex; flex-direction: column; gap: 4px; text-align: left; padding: 12px 14px; border: 1px solid var(--line, #e5e7ea); border-radius: 8px; background: var(--raised, #ffffff); color: var(--ink, #1f2328); font: inherit; cursor: pointer; transition: border-color .15s; } .ds-note:hover { border-color: var(--line-strong, #d0d5db); } .ds-note.is-active { border-color: var(--accent, #2563eb); box-shadow: 0 0 0 1px var(--accent, #2563eb); } .ds-note:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 2px; } .ds-note-t { font-weight: 600; } .ds-note-s { color: var(--muted, #59636e); font-size: 13px; } .ds-note-m { display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--muted, #59636e); font-variant-numeric: tabular-nums; } .ds-badge { background: var(--danger-soft, #fef3f2); color: var(--danger, #b42318); border-radius: 5px; padding: 0 6px; font-weight: 600; }"
+      "refersTo": "note-row",
+      "description": "Borderless rows on the list grey; the open note is lifted onto raised with a hairline ring; Recording is plain danger text.",
+      "html": "<div class=\"ds-rows\"><button class=\"ds-row\"><span class=\"ds-row-t\"><span class=\"ds-mark\"></span>Assignment 6 review</span><span class=\"ds-row-s\">Common mistakes in Q3 and how marks were lost.</span><span class=\"ds-row-m\">Nov 20, 2026 · 52:06</span></button><button class=\"ds-row is-active\"><span class=\"ds-row-t\"><span class=\"ds-mark\"></span>Structural recursion on lists</span><span class=\"ds-row-s\">Template follows the data definition.</span><span class=\"ds-row-m\">Nov 27, 2026 <span class=\"ds-badge\">Recording</span></span></button></div>",
+      "css": ".ds-rows { display: flex; flex-direction: column; gap: 8px; width: 260px; padding: 12px; background: var(--list, #fafafb); font: 14px/1.5 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); } .ds-row { display: flex; flex-direction: column; gap: 4px; text-align: left; padding: 12px 14px; border: 0; border-radius: 10px; background: transparent; color: var(--ink, #1f2328); font: inherit; cursor: pointer; transition: background-color .15s; } .ds-row:hover, .ds-row.is-active { background: var(--raised, #ffffff); } .ds-row.is-active { box-shadow: 0 0 0 1px var(--line, #e5e7ea); } .ds-row:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 2px; } .ds-row-t { display: flex; align-items: center; gap: 7px; font-weight: 600; } .ds-mark { width: 12px; height: 4px; border-radius: 2px; background: var(--accent-bg, #2563eb); flex: none; } .ds-row-s { color: var(--muted, #59636e); font-size: 13px; } .ds-row-m { display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--muted, #59636e); font-variant-numeric: tabular-nums; } .ds-badge { color: var(--danger, #b42318); font-weight: 600; }"
     },
     {
-      "name": "Time-stamped Line",
+      "name": "The Route",
       "kind": "custom",
-      "refersTo": "time-chip",
-      "description": "Signature: each line typed while recording is led by a blue time chip in the gutter; click to replay.",
-      "html": "<div class=\"ds-lines\"><div class=\"ds-line\"><button class=\"ds-ts\">2:14</button>Template follows the data definition</div><div class=\"ds-line\"><button class=\"ds-ts\">11:03</button>Base case empty, identity (0 for sum)</div></div>",
-      "css": ".ds-lines { font: 16px/1.7 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); color: var(--ink, #1f2328); padding-left: 72px; } .ds-line { position: relative; } .ds-line + .ds-line { margin-top: 6px; } .ds-ts { position: absolute; left: -64px; top: .32em; width: 56px; border: 0; border-radius: 6px; padding: 0; background: var(--accent-soft, #eaf1fe); color: var(--accent, #2563eb); font: 600 11.5px/1.5 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); font-variant-numeric: tabular-nums; cursor: pointer; } .ds-ts:hover { background: var(--accent-bg, #2563eb); color: var(--on-accent, #ffffff); } .ds-ts:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 2px; }"
+      "refersTo": "route-stop",
+      "description": "Signature: mono times beside a 2px 45% accent route with a 10px hollow stop per stamped line; filled accent for the playing line, red for the newest line while recording.",
+      "html": "<div class=\"ds-route is-live\"><div class=\"ds-stop\" data-ts=\"2:14\">Template follows the data definition</div><div class=\"ds-stop is-now\" data-ts=\"11:03\">Base case empty, identity (0 for sum)</div><div class=\"ds-stop\" data-ts=\"34:12\">Count steps: each call shrinks rest by one</div></div>",
+      "css": ".ds-route { --gutter: 92px; --route: color-mix(in oklab, var(--accent, #2563eb) 45%, transparent); position: relative; padding: 8px 16px 8px var(--gutter); font: 16px/1.7 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); color: var(--ink, #1f2328); background: var(--surface, #ffffff) linear-gradient(var(--route), var(--route)) no-repeat calc(var(--gutter) - 21px) 0 / 2px 100%; } .ds-stop { position: relative; } .ds-stop + .ds-stop { margin-top: 6px; } .ds-stop::before { content: attr(data-ts); position: absolute; left: calc(-1 * var(--gutter) + 4px); top: .3em; width: 48px; text-align: right; font: 500 12.5px/1.5 ui-monospace, \"SF Mono\", \"Cascadia Mono\", Consolas, monospace; font-variant-numeric: tabular-nums; color: var(--muted, #59636e); cursor: pointer; } .ds-stop:hover::before { color: var(--accent, #2563eb); text-decoration: underline; } .ds-stop::after { content: \"\"; position: absolute; left: -25px; top: .55em; width: 10px; height: 10px; box-sizing: border-box; border-radius: 50%; background: var(--surface, #ffffff); border: 2px solid var(--accent, #2563eb); } .ds-stop.is-now { background: var(--accent-soft, #eaf1fe); border-radius: 4px; box-shadow: -6px 0 0 var(--accent-soft, #eaf1fe), 6px 0 0 var(--accent-soft, #eaf1fe); } .ds-stop.is-now::after { background: var(--accent, #2563eb); } .ds-route.is-live > .ds-stop:last-child::after { background: var(--record, #d92d20); border-color: var(--record, #d92d20); box-shadow: 0 0 0 3px var(--danger-soft, #fef3f2); } .ds-route.is-live > .ds-stop:last-child::before { color: var(--danger, #b42318); font-weight: 600; }"
     },
     {
-      "name": "Record Bar",
+      "name": "Recording Band",
       "kind": "custom",
-      "refersTo": "record-bar",
-      "description": "Signature: the transport while recording, tinted danger-soft with a pulsing dot, timer, meter, Pause and Stop.",
-      "html": "<div class=\"ds-rec\"><span class=\"ds-rec-dot\"></span><strong>Recording</strong><span class=\"ds-rec-time\">34:13</span><span class=\"ds-meter\"><span style=\"width:45%\"></span></span><span style=\"flex:1\"></span><button class=\"ds-rec-btn\">Pause</button><button class=\"ds-rec-btn ds-rec-stop\">Stop</button></div>",
-      "css": ".ds-rec { display: flex; align-items: center; gap: 10px; min-height: 54px; padding: 10px 24px; border-top: 1px solid var(--line, #e5e7ea); background: var(--danger-soft, #fef3f2); color: var(--ink, #1f2328); font: 14px/1.5 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); } .ds-rec-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--record, #d92d20); animation: ds-pulse 1.4s ease-in-out infinite; } @keyframes ds-pulse { 50% { opacity: .35; } } @media (prefers-reduced-motion: reduce) { .ds-rec-dot { animation: none; } } .ds-rec-time { font: 600 16px var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); font-variant-numeric: tabular-nums; min-width: 52px; } .ds-meter { width: 120px; height: 6px; border-radius: 3px; background: var(--line, #e5e7ea); overflow: hidden; } .ds-meter span { display: block; height: 100%; background: var(--record, #d92d20); } .ds-rec-btn { height: 34px; padding: 0 13px; border-radius: 8px; border: 1px solid var(--line-strong, #d0d5db); background: var(--raised, #ffffff); color: var(--ink, #1f2328); font: 500 14px/1.5 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); cursor: pointer; } .ds-rec-btn:hover { background: var(--sunken, #f5f6f7); } .ds-rec-stop { background: var(--danger-bg, #c4291c); border-color: var(--danger-bg, #c4291c); color: #ffffff; } .ds-rec-stop:hover { background: var(--danger-bg, #c4291c); filter: brightness(1.08); } .ds-rec-btn:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 2px; }"
+      "refersTo": "recording-band",
+      "description": "Signature: the band under the note header while recording: status tag, time, Pause and Stop; no meter.",
+      "html": "<div class=\"ds-band\"><span class=\"ds-rec-tag\"><span class=\"ds-rec-dot\"></span>Recording</span><span class=\"ds-rec-time\">34:13</span><span style=\"flex:1\"></span><button class=\"ds-band-btn\">Pause</button><button class=\"ds-band-btn ds-band-stop\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><rect x=\"6\" y=\"6\" width=\"12\" height=\"12\" rx=\"2\"/></svg>Stop</button></div>",
+      "css": ".ds-band { display: flex; align-items: center; gap: 12px; min-height: 54px; padding: 10px 32px; border-bottom: 1px solid var(--line, #e5e7ea); background: var(--list, #fafafb); color: var(--ink, #1f2328); font: 14px/1.5 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); } .ds-rec-tag { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: 10px; background: var(--danger-soft, #fef3f2); color: var(--danger, #b42318); } .ds-rec-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--record, #d92d20); animation: ds-pulse 1.4s ease-in-out infinite; } @keyframes ds-pulse { 50% { opacity: .35; } } @media (prefers-reduced-motion: reduce) { .ds-rec-dot { animation: none; } } .ds-rec-time { font: 600 16px var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); font-variant-numeric: tabular-nums; min-width: 52px; } .ds-band-btn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 13px; border-radius: 8px; border: 1px solid var(--line-strong, #d0d5db); background: var(--raised, #ffffff); color: var(--ink, #1f2328); font: 500 14px/1.5 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); cursor: pointer; } .ds-band-btn:hover { background: var(--sunken, #f5f6f7); } .ds-band-stop { background: var(--danger-bg, #c4291c); border-color: var(--danger-bg, #c4291c); color: #ffffff; } .ds-band-stop:hover { background: var(--danger-bg, #c4291c); filter: brightness(1.08); } .ds-band-btn:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 2px; }"
+    },
+    {
+      "name": "Linked Transcript",
+      "kind": "custom",
+      "refersTo": "transcript-row-linked",
+      "description": "Mono time over text, no speaker labels; rows around the caret line tint and merge. A first-run hint (first three linked notes) is pinned to the panel foot while anything is linked.",
+      "html": "<div class=\"ds-tr-panel\"><div class=\"ds-tr\"><div class=\"ds-tr-row\"><button class=\"ds-tr-t\">32:05</button>So the empty check is enough?</div><div class=\"ds-tr-row is-linked\"><button class=\"ds-tr-t\">32:11</button>Exactly. Empty, or a cons.</div><div class=\"ds-tr-row is-linked\"><button class=\"ds-tr-t\">33:40</button>Now count the steps.</div></div><p class=\"ds-tr-hint\">Tinted: what was being said around the line you’re on.</p></div>",
+      "css": ".ds-tr-panel { display: flex; flex-direction: column; width: 340px; height: 300px; overflow-y: auto; padding: 16px 20px 0; background: var(--surface, #ffffff); border-left: 1px solid var(--line, #e5e7ea); } .ds-tr { display: flex; flex-direction: column; flex: 1; font: 14px/1.55 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); color: var(--ink, #1f2328); } .ds-tr-row { display: flex; flex-direction: column; gap: 1px; padding: 7px 8px; border-radius: 8px; } .ds-tr-t { align-self: flex-start; border: 0; background: none; padding: 0; font: 500 12px/1.5 ui-monospace, \"SF Mono\", \"Cascadia Mono\", Consolas, monospace; font-variant-numeric: tabular-nums; color: var(--muted, #59636e); cursor: pointer; } .ds-tr-t:hover { color: var(--accent, #2563eb); text-decoration: underline; } .ds-tr-t:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 2px; } .ds-tr-row.is-linked { background: var(--accent-soft, #eaf1fe); } .ds-tr-row.is-linked .ds-tr-t { color: var(--accent, #2563eb); } .ds-tr-row.is-linked:has(+ .is-linked) { border-bottom-left-radius: 0; border-bottom-right-radius: 0; } .ds-tr-row.is-linked + .is-linked { border-top-left-radius: 0; border-top-right-radius: 0; } .ds-tr-hint { position: sticky; bottom: 0; margin: auto -20px 0; padding: 10px 28px; text-wrap: balance; font: 12.5px/1.5 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); color: var(--muted, #59636e); background: var(--surface, #ffffff); border-top: 1px solid var(--line, #e5e7ea); }"
     },
     {
       "name": "Menu",
       "kind": "custom",
       "refersTo": "menu",
-      "description": "Floating menu: the one place (with dialogs and toasts) that carries the Float shadow.",
+      "description": "Floating menu: with dialogs and toasts, the only things that carry the Float shadow.",
       "html": "<div class=\"ds-menu\" role=\"menu\"><button class=\"ds-menu-item\" role=\"menuitem\">Pin note</button><button class=\"ds-menu-item\" role=\"menuitem\">Move to course</button><div class=\"ds-menu-sep\"></div><button class=\"ds-menu-item ds-danger\" role=\"menuitem\">Delete note</button></div>",
       "css": ".ds-menu { min-width: 190px; padding: 5px; background: var(--raised, #ffffff); border: 1px solid var(--line-strong, #d0d5db); border-radius: 8px; box-shadow: var(--shadow, 0 1px 2px rgba(16, 24, 40, .06), 0 8px 24px rgba(16, 24, 40, .10)); font: 14px/1.5 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); } .ds-menu-item { display: flex; width: 100%; padding: 6px 10px; border: 0; border-radius: 6px; background: none; color: var(--ink, #1f2328); font: inherit; text-align: left; cursor: pointer; } .ds-menu-item:hover, .ds-menu-item:focus-visible { background: var(--accent-soft, #eaf1fe); outline: none; } .ds-danger { color: var(--danger, #b42318); } .ds-menu-sep { height: 1px; background: var(--line, #e5e7ea); margin: 5px 4px; }"
     }
   ],
   "narrative": {
-    "northStar": "The Familiar Notebook",
-    "overview": "**Creative North Star: \"The Familiar Notebook\"**\n\nListeNote looks like the notes app a student already knows, done with care: Apple Notes and Notion are the bar, and convention is the commitment. A grey sidebar holds courses and study tools where every notes app keeps them, a column of bordered note cards sits beside it, and a white page holds the note. The only thing that makes it ListeNote rather than any notes app is the recording: a blue time chip leads every line typed during a lecture, and a red-tinted bar runs along the bottom while the microphone is on.\n\nThe system is neutral, quiet and content-first. Cool greys carry structure, one blue accent marks what is selected or actionable, and red is held back for recording and danger. Everything is set in the operating system's own sans, so the app feels native on macOS and on Windows alike. Panes are separated by 1px hairlines rather than shadows; depth is reserved for things that float. Density is that of a desktop productivity tool: 14px body, 34px controls, 8px corners.\n\nThis look replaced an earlier warm-cream ground with serif headings, which read as decoration rather than tool. That direction is rejected.",
+    "northStar": "The Lecture Line",
+    "overview": "**Creative North Star: \"The Lecture Line\"**\n\nListeNote looks like the notes app a student already knows, light and soft, at Apple Notes and Notion polish. A light grey sidebar holds courses and study tools where every notes app keeps them, a near-white column lists the course's notes as quiet rows, and a white page holds the note. Convention is the commitment, with one quiet ListeNote move: every line typed during a lecture is a stop on a thin blue line through the lecture, its time set in small mono figures beside it.\n\nThe system is neutral, soft and content-first. Three greys step from sidebar to list to page, one blue accent marks actions, selection, the route and the linked moment, and red is held back for recording and danger. Words are set in the operating system's own sans so the app feels native on macOS and Windows alike; times are set in the system mono. Panes are divided by 1px hairlines rather than shadows, and depth is reserved for things that float. Density is that of a desktop productivity tool: 14px body, 34px controls, 8px control corners and 10px soft surfaces.\n\nThe user rejected bold themes, square corners, colour bands and pill badges for this world, and the earlier warm-cream ground with serif headings before it.",
     "keyCharacteristics": [
-      "Three resizable panes on a neutral grey and white ground, divided by hairlines.",
-      "One accent colour (blue by default, user-selectable) for primary action, selection, focus and timestamps.",
+      "Three resizable panes stepping from grey sidebar to near-white list to white note, divided by hairlines.",
+      "One accent colour (blue by default, user-selectable) for actions, selection, focus, the route and the linked transcript moment.",
       "Red only for the recording state, destructive actions and errors.",
-      "System sans throughout, semibold headings, tabular numerals for every time and count.",
-      "8px corners and 1px borders; flat at rest, shadow only on floating layers.",
+      "System sans for words, system mono with tabular figures for lecture times.",
+      "The route: a 2px accent line in the editor gutter with a 10px stop at every stamped line.",
+      "Recording status, time, Pause and Stop sit in a band directly under the note header.",
+      "The study panel is a full-height column beside the note, and the caret's line is linked to its transcript moment on both sides.",
       "Full light and dark themes that follow the operating system."
     ],
     "rules": [
       {
         "name": "The One Blue Rule",
-        "body": "One accent at a time, and only for primary action, selection, focus and timestamps. Never use the accent for decoration, headings or illustration.",
+        "body": "One accent at a time, and only for actions, selection, focus, the route and the linked moment. Never use the accent for decoration, headings or illustration.",
         "section": "colors"
       },
       {
@@ -968,13 +1020,13 @@
         "section": "colors"
       },
       {
-        "name": "The One Family Rule",
-        "body": "Every word is in the system sans. No second display face, no serif headings; monospace is for code only.",
+        "name": "The Two Voices Rule",
+        "body": "Words are in the system sans; lecture times (editor gutter and transcript) and code are in the system mono. No third face, no decorative display face, no serif headings.",
         "section": "typography"
       },
       {
         "name": "The Tabular Time Rule",
-        "body": "Every time, duration and count (time chips, transcript times, the recording timer, playback time, list counts) uses tabular numerals so digits do not shuffle as they change.",
+        "body": "Every time, duration and count (route times, transcript times, the recording timer, playback time, list counts) uses tabular figures so digits do not shuffle as they change.",
         "section": "typography"
       },
       {
@@ -984,25 +1036,28 @@
       },
       {
         "name": "The Hairline Rule",
-        "body": "Structure is drawn with 1px lines, never with shadows. If it does not float over other content, it has no shadow.",
+        "body": "Structure is drawn with 1px lines and tonal steps, never with shadows. If it does not float over other content, it has no shadow.",
         "section": "elevation"
       }
     ],
     "dos": [
       "Do take every colour from the tokens and set both the light and the dark value together.",
-      "Do use the accent only for primary action, selection, focus and time chips (The One Blue Rule).",
-      "Do keep headings semibold (600) in the system sans and give every time or count tabular numerals.",
-      "Do draw structure with 1px hairlines and give 8px corners to controls, cards, inputs and menus.",
+      "Do use the accent only for actions, selection, focus, the route and the linked moment (The One Blue Rule).",
+      "Do keep headings semibold (600) in the system sans, and set lecture times in the system mono with tabular figures.",
+      "Do draw structure with 1px hairlines and tonal steps; give controls 8px corners and selected or tagged soft surfaces 10px.",
+      "Do mark courses with the 12 by 4px coloured line.",
       "Do reserve the Float shadow for menus, dialogs, toasts and other layers that sit above the panes.",
       "Do keep sidebar and section labels in sentence case at 12px semibold muted.",
       "Do use 16 to 18px stroke icons (1.8 stroke, round caps) drawn inline as SVG.",
       "Do keep text pairings at 4.5:1 or better in both themes, including text on record and danger fills."
     ],
     "donts": [
-      "Don't bring back the warm-cream ground or serif headings; this world replaced them.",
-      "Don't add a second typeface or a decorative display face.",
+      "Don't bring back the warm-cream ground, serif headings, bold themes or square corners; the user rejected them.",
+      "Don't use tinted colour bands or pill badges; the recording band stays list grey, and status is a soft 10px tag or plain coloured text.",
+      "Don't mark courses with dots or pills.",
+      "Don't add a third typeface or a decorative display face.",
       "Don't use red for anything but recording, destructive actions and errors (The Red Means Recording Rule).",
-      "Don't put shadows on panes, list cards or rows (The Hairline Rule).",
+      "Don't put shadows on panes, list rows or cards (The Hairline Rule).",
       "Don't add uppercase eyebrow labels, kickers or tracked-out small caps above headings.",
       "Don't introduce novelty styling (gradients, glass, oversized radii, coloured backgrounds behind sections) that the platform notes apps would not use."
     ]
