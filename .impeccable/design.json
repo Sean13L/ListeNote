@@ -1,0 +1,1065 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-27T22:23:34+00:00",
+  "title": "Design System: ListeNote",
+  "extensions": {
+    "route": {
+      "gutter": "92px",
+      "gutterTight": "88px",
+      "line": "2px, color-mix(in oklab, var(--accent) 45%, transparent), at gutter - 21px",
+      "stop": "10px circle, paper fill, 2px accent outline; filled accent and accent-soft line tint for the playing line and the caret-linked line (constructed stylesheet keyed by data-t, since the CSP blocks inline style); newest while recording filled record red with live-halo",
+      "time": "route-time typography, right-aligned in 48px, muted; accent underline on hover; danger 600 for the newest while recording"
+    },
+    "colorMeta": {
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "#ffffff",
+        "cssVar": "--bg",
+        "theme": "light",
+        "tonalRamp": [
+          "#262626",
+          "#404040",
+          "#595959",
+          "#737373",
+          "#8c8c8c",
+          "#adadad",
+          "#d1d1d1",
+          "#f2f2f2"
+        ]
+      },
+      "raised": {
+        "role": "neutral",
+        "displayName": "Raised",
+        "canonical": "#ffffff",
+        "cssVar": "--raised",
+        "theme": "light",
+        "tonalRamp": [
+          "#262626",
+          "#404040",
+          "#595959",
+          "#737373",
+          "#8c8c8c",
+          "#adadad",
+          "#d1d1d1",
+          "#f2f2f2"
+        ]
+      },
+      "sunken": {
+        "role": "neutral",
+        "displayName": "Sunken",
+        "canonical": "#f5f6f7",
+        "cssVar": "--sunken",
+        "theme": "light",
+        "tonalRamp": [
+          "#232629",
+          "#3a4045",
+          "#515962",
+          "#67737f",
+          "#808c98",
+          "#a6adb5",
+          "#cdd1d5",
+          "#f1f2f3"
+        ]
+      },
+      "sidebar-grey": {
+        "role": "neutral",
+        "displayName": "Sidebar Grey",
+        "canonical": "#f4f5f7",
+        "cssVar": "--side",
+        "theme": "light",
+        "tonalRamp": [
+          "#22252a",
+          "#383d48",
+          "#4d5565",
+          "#616d84",
+          "#7b869e",
+          "#a3aab8",
+          "#cccfd6",
+          "#f1f2f3"
+        ]
+      },
+      "list-grey": {
+        "role": "neutral",
+        "displayName": "List Grey",
+        "canonical": "#fafafb",
+        "cssVar": "--list",
+        "theme": "light",
+        "tonalRamp": [
+          "#232329",
+          "#3a3a45",
+          "#515162",
+          "#67677f",
+          "#808098",
+          "#a6a6b5",
+          "#cdcdd5",
+          "#f1f1f3"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#1f2328",
+        "cssVar": "--ink",
+        "theme": "light",
+        "tonalRamp": [
+          "#23262a",
+          "#393f46",
+          "#4f5863",
+          "#657181",
+          "#7e8b9a",
+          "#a5acb6",
+          "#cdd1d5",
+          "#f1f2f3"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted Slate",
+        "canonical": "#59636e",
+        "cssVar": "--muted",
+        "theme": "light",
+        "tonalRamp": [
+          "#232629",
+          "#3b4045",
+          "#515961",
+          "#67727e",
+          "#818c98",
+          "#a6adb5",
+          "#ced1d5",
+          "#f1f2f3"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#e5e7ea",
+        "cssVar": "--line",
+        "theme": "light",
+        "tonalRamp": [
+          "#232629",
+          "#3a3f45",
+          "#515861",
+          "#67707e",
+          "#818a98",
+          "#a6acb5",
+          "#ced0d5",
+          "#f1f2f3"
+        ]
+      },
+      "line-strong": {
+        "role": "neutral",
+        "displayName": "Strong Hairline",
+        "canonical": "#d0d5db",
+        "cssVar": "--line-strong",
+        "theme": "light",
+        "tonalRamp": [
+          "#23262a",
+          "#393f46",
+          "#4f5863",
+          "#647181",
+          "#7e8b9b",
+          "#a4adb6",
+          "#cdd1d5",
+          "#f1f2f3"
+        ]
+      },
+      "accent": {
+        "role": "primary",
+        "displayName": "Notes Blue",
+        "canonical": "#2563eb",
+        "cssVar": "--accent",
+        "theme": "light",
+        "tonalRamp": [
+          "#101e3c",
+          "#173069",
+          "#194199",
+          "#1851ce",
+          "#316ae7",
+          "#7598e6",
+          "#b6c7ec",
+          "#ecf0f9"
+        ]
+      },
+      "accent-fill": {
+        "role": "primary",
+        "displayName": "Notes Blue Fill",
+        "canonical": "#2563eb",
+        "cssVar": "--accent-bg",
+        "theme": "light",
+        "tonalRamp": [
+          "#101e3c",
+          "#173069",
+          "#194199",
+          "#1851ce",
+          "#316ae7",
+          "#7598e6",
+          "#b6c7ec",
+          "#ecf0f9"
+        ]
+      },
+      "accent-soft": {
+        "role": "primary",
+        "displayName": "Blue Wash",
+        "canonical": "#eaf1fe",
+        "cssVar": "--accent-soft",
+        "theme": "light",
+        "tonalRamp": [
+          "#0e1f3e",
+          "#13326d",
+          "#13449f",
+          "#0f55d6",
+          "#296ef0",
+          "#6f9bec",
+          "#b3c8ef",
+          "#ebf0f9"
+        ]
+      },
+      "on-accent": {
+        "role": "primary",
+        "displayName": "On Accent",
+        "canonical": "#ffffff",
+        "cssVar": "--on-accent",
+        "theme": "light",
+        "tonalRamp": [
+          "#262626",
+          "#404040",
+          "#595959",
+          "#737373",
+          "#8c8c8c",
+          "#adadad",
+          "#d1d1d1",
+          "#f2f2f2"
+        ]
+      },
+      "record": {
+        "role": "secondary",
+        "displayName": "Record Red",
+        "canonical": "#d92d20",
+        "cssVar": "--record",
+        "theme": "light",
+        "tonalRamp": [
+          "#3a1613",
+          "#64201b",
+          "#932820",
+          "#c42d21",
+          "#de463b",
+          "#e0827b",
+          "#e9bcb9",
+          "#f8eded"
+        ]
+      },
+      "danger": {
+        "role": "secondary",
+        "displayName": "Danger Red",
+        "canonical": "#b42318",
+        "cssVar": "--danger",
+        "theme": "light",
+        "tonalRamp": [
+          "#3a1512",
+          "#661f1a",
+          "#94271e",
+          "#c72b1f",
+          "#e04438",
+          "#e28079",
+          "#eabcb8",
+          "#f8edec"
+        ]
+      },
+      "danger-fill": {
+        "role": "secondary",
+        "displayName": "Danger Fill",
+        "canonical": "#c4291c",
+        "cssVar": "--danger-bg",
+        "theme": "light",
+        "tonalRamp": [
+          "#3a1613",
+          "#65201b",
+          "#93281f",
+          "#c52d21",
+          "#de473a",
+          "#e1827a",
+          "#eabcb9",
+          "#f8eded"
+        ]
+      },
+      "danger-soft": {
+        "role": "secondary",
+        "displayName": "Danger Wash",
+        "canonical": "#fef3f2",
+        "cssVar": "--danger-soft",
+        "theme": "light",
+        "tonalRamp": [
+          "#3d1410",
+          "#6a1c15",
+          "#9b2217",
+          "#d12415",
+          "#ea3e2e",
+          "#e87d73",
+          "#edbab5",
+          "#f9edec"
+        ]
+      },
+      "ok": {
+        "role": "tertiary",
+        "displayName": "Done Green",
+        "canonical": "#16723f",
+        "cssVar": "--ok",
+        "theme": "light",
+        "tonalRamp": [
+          "#153824",
+          "#1e613c",
+          "#258d54",
+          "#29bd6b",
+          "#42d684",
+          "#7fdca8",
+          "#bbe7cf",
+          "#edf7f2"
+        ]
+      },
+      "ok-soft": {
+        "role": "tertiary",
+        "displayName": "Done Wash",
+        "canonical": "#e6f4ec",
+        "cssVar": "--ok-soft",
+        "theme": "light",
+        "tonalRamp": [
+          "#1c3025",
+          "#2d533d",
+          "#3b7755",
+          "#489d6d",
+          "#62b786",
+          "#93c8aa",
+          "#c4decf",
+          "#eff5f2"
+        ]
+      },
+      "warn": {
+        "role": "tertiary",
+        "displayName": "Amber",
+        "canonical": "#8a5a00",
+        "cssVar": "--warn",
+        "theme": "light",
+        "tonalRamp": [
+          "#402e0c",
+          "#714f0e",
+          "#a6710c",
+          "#e09405",
+          "#faae1f",
+          "#f2c269",
+          "#f2dbb0",
+          "#faf5eb"
+        ]
+      },
+      "warn-soft": {
+        "role": "tertiary",
+        "displayName": "Amber Wash",
+        "canonical": "#fdf3da",
+        "cssVar": "--warn-soft",
+        "theme": "light",
+        "tonalRamp": [
+          "#3e300f",
+          "#6c5313",
+          "#9f7714",
+          "#d59d10",
+          "#efb62a",
+          "#ebc870",
+          "#eedeb4",
+          "#f9f5eb"
+        ]
+      },
+      "mark": {
+        "role": "tertiary",
+        "displayName": "Highlighter",
+        "canonical": "#fff1a8",
+        "cssVar": "--mark",
+        "theme": "light",
+        "tonalRamp": [
+          "#40380c",
+          "#71610e",
+          "#a68e0c",
+          "#e0bd05",
+          "#fad71f",
+          "#f2dc69",
+          "#f2e7b0",
+          "#faf7eb"
+        ]
+      },
+      "paper-dark": {
+        "role": "neutral",
+        "displayName": "Paper (dark)",
+        "canonical": "#1b1c1e",
+        "cssVar": "--bg",
+        "theme": "dark",
+        "tonalRamp": [
+          "#252628",
+          "#3d3f42",
+          "#55585d",
+          "#6d7179",
+          "#868a92",
+          "#aaacb1",
+          "#cfd1d3",
+          "#f2f2f3"
+        ]
+      },
+      "raised-dark": {
+        "role": "neutral",
+        "displayName": "Raised (dark)",
+        "canonical": "#242528",
+        "cssVar": "--raised",
+        "theme": "dark",
+        "tonalRamp": [
+          "#252628",
+          "#3d3e42",
+          "#55575d",
+          "#6d7079",
+          "#868992",
+          "#aaacb1",
+          "#cfd0d3",
+          "#f2f2f3"
+        ]
+      },
+      "sunken-dark": {
+        "role": "neutral",
+        "displayName": "Sunken (dark)",
+        "canonical": "#151617",
+        "cssVar": "--sunken",
+        "theme": "dark",
+        "tonalRamp": [
+          "#252627",
+          "#3e4042",
+          "#56595d",
+          "#6e7378",
+          "#878c91",
+          "#aaadb1",
+          "#d0d1d3",
+          "#f2f2f3"
+        ]
+      },
+      "sidebar-grey-dark": {
+        "role": "neutral",
+        "displayName": "Sidebar Grey (dark)",
+        "canonical": "#222326",
+        "cssVar": "--side",
+        "theme": "dark",
+        "tonalRamp": [
+          "#252628",
+          "#3d3e42",
+          "#55575e",
+          "#6d7079",
+          "#868992",
+          "#aaacb1",
+          "#cfd0d3",
+          "#f2f2f3"
+        ]
+      },
+      "list-grey-dark": {
+        "role": "neutral",
+        "displayName": "List Grey (dark)",
+        "canonical": "#1f2023",
+        "cssVar": "--list",
+        "theme": "dark",
+        "tonalRamp": [
+          "#252528",
+          "#3d3e43",
+          "#55575e",
+          "#6c6f79",
+          "#868993",
+          "#a9abb2",
+          "#cfd0d3",
+          "#f2f2f3"
+        ]
+      },
+      "ink-dark": {
+        "role": "neutral",
+        "displayName": "Ink (dark)",
+        "canonical": "#ececee",
+        "cssVar": "--ink",
+        "theme": "dark",
+        "tonalRamp": [
+          "#252528",
+          "#3d3d42",
+          "#55555e",
+          "#6d6d79",
+          "#868692",
+          "#aaaab1",
+          "#cfcfd3",
+          "#f2f2f3"
+        ]
+      },
+      "muted-dark": {
+        "role": "neutral",
+        "displayName": "Muted Slate (dark)",
+        "canonical": "#a3a8af",
+        "cssVar": "--muted",
+        "theme": "dark",
+        "tonalRamp": [
+          "#242628",
+          "#3c3f43",
+          "#54585f",
+          "#6b717a",
+          "#858b94",
+          "#a9adb2",
+          "#cfd1d3",
+          "#f2f2f3"
+        ]
+      },
+      "line-dark": {
+        "role": "neutral",
+        "displayName": "Hairline (dark)",
+        "canonical": "#2d2f33",
+        "cssVar": "--line",
+        "theme": "dark",
+        "tonalRamp": [
+          "#252628",
+          "#3d3f43",
+          "#54585e",
+          "#6c707a",
+          "#858a93",
+          "#a9acb2",
+          "#cfd0d3",
+          "#f2f2f3"
+        ]
+      },
+      "line-strong-dark": {
+        "role": "neutral",
+        "displayName": "Strong Hairline (dark)",
+        "canonical": "#3e4146",
+        "cssVar": "--line-strong",
+        "theme": "dark",
+        "tonalRamp": [
+          "#252628",
+          "#3d3f43",
+          "#55585e",
+          "#6c7179",
+          "#868b93",
+          "#a9acb2",
+          "#cfd1d3",
+          "#f2f2f3"
+        ]
+      },
+      "accent-dark": {
+        "role": "primary",
+        "displayName": "Notes Blue (dark)",
+        "canonical": "#7eaaff",
+        "cssVar": "--accent",
+        "theme": "dark",
+        "tonalRamp": [
+          "#0c1e40",
+          "#0e3071",
+          "#0c41a6",
+          "#0550e0",
+          "#1f69fa",
+          "#6998f2",
+          "#b0c7f2",
+          "#ebf0fa"
+        ]
+      },
+      "accent-fill-dark": {
+        "role": "primary",
+        "displayName": "Notes Blue Fill (dark)",
+        "canonical": "#2f6bf0",
+        "cssVar": "--accent-bg",
+        "theme": "dark",
+        "tonalRamp": [
+          "#101e3d",
+          "#15306b",
+          "#16409c",
+          "#144fd2",
+          "#2d68eb",
+          "#7297e9",
+          "#b5c6ed",
+          "#ecf0f9"
+        ]
+      },
+      "accent-soft-dark": {
+        "role": "primary",
+        "displayName": "Blue Wash (dark)",
+        "canonical": "#1d2a44",
+        "cssVar": "--accent-soft",
+        "theme": "dark",
+        "tonalRamp": [
+          "#1c2331",
+          "#2c3954",
+          "#3a4f78",
+          "#47649f",
+          "#607eb8",
+          "#92a4c9",
+          "#c4cdde",
+          "#eff1f5"
+        ]
+      },
+      "record-dark": {
+        "role": "secondary",
+        "displayName": "Record Red (dark)",
+        "canonical": "#d33a2f",
+        "cssVar": "--record",
+        "theme": "dark",
+        "tonalRamp": [
+          "#371715",
+          "#602420",
+          "#8b2e27",
+          "#ba352b",
+          "#d44e45",
+          "#da8781",
+          "#e6bfbc",
+          "#f7eeed"
+        ]
+      },
+      "danger-dark": {
+        "role": "secondary",
+        "displayName": "Danger Red (dark)",
+        "canonical": "#ff8f86",
+        "cssVar": "--danger",
+        "theme": "dark",
+        "tonalRamp": [
+          "#40100c",
+          "#71160e",
+          "#a6180c",
+          "#e01505",
+          "#fa2f1f",
+          "#f27369",
+          "#f2b5b0",
+          "#faeceb"
+        ]
+      },
+      "danger-soft-dark": {
+        "role": "secondary",
+        "displayName": "Danger Wash (dark)",
+        "canonical": "#36191a",
+        "cssVar": "--danger-soft",
+        "theme": "dark",
+        "tonalRamp": [
+          "#301d1d",
+          "#522e2f",
+          "#763d3f",
+          "#9b4b4d",
+          "#b46467",
+          "#c79496",
+          "#ddc5c6",
+          "#f5eff0"
+        ]
+      },
+      "ok-dark": {
+        "role": "tertiary",
+        "displayName": "Done Green (dark)",
+        "canonical": "#6fd3a0",
+        "cssVar": "--ok",
+        "theme": "dark",
+        "tonalRamp": [
+          "#183426",
+          "#255a3f",
+          "#308258",
+          "#38ad72",
+          "#52c78b",
+          "#89d2ad",
+          "#c0e2d1",
+          "#eef6f2"
+        ]
+      },
+      "ok-soft-dark": {
+        "role": "tertiary",
+        "displayName": "Done Wash (dark)",
+        "canonical": "#15302a",
+        "cssVar": "--ok-soft",
+        "theme": "dark",
+        "tonalRamp": [
+          "#1c312c",
+          "#2c534a",
+          "#3b776a",
+          "#489e8b",
+          "#61b7a4",
+          "#93c8bc",
+          "#c4ded8",
+          "#eff5f4"
+        ]
+      },
+      "warn-dark": {
+        "role": "tertiary",
+        "displayName": "Amber (dark)",
+        "canonical": "#f0c36a",
+        "cssVar": "--warn",
+        "theme": "dark",
+        "tonalRamp": [
+          "#3c2d11",
+          "#684d17",
+          "#986e1a",
+          "#cc9019",
+          "#e6aa33",
+          "#e5c076",
+          "#ecdab6",
+          "#f8f4ec"
+        ]
+      },
+      "warn-soft-dark": {
+        "role": "tertiary",
+        "displayName": "Amber Wash (dark)",
+        "canonical": "#362a10",
+        "cssVar": "--warn-soft",
+        "theme": "dark",
+        "tonalRamp": [
+          "#342b18",
+          "#5b4a25",
+          "#83692f",
+          "#ae8937",
+          "#c8a251",
+          "#d3bb88",
+          "#e3d8bf",
+          "#f6f4ee"
+        ]
+      },
+      "mark-dark": {
+        "role": "tertiary",
+        "displayName": "Highlighter (dark)",
+        "canonical": "#5e4f10",
+        "cssVar": "--mark",
+        "theme": "dark",
+        "tonalRamp": [
+          "#393214",
+          "#63551d",
+          "#907b23",
+          "#c0a325",
+          "#dabc3f",
+          "#decb7d",
+          "#e8dfba",
+          "#f8f6ed"
+        ]
+      }
+    },
+    "accentThemes": [
+      {
+        "name": "indigo",
+        "displayName": "Notes Blue (default)",
+        "light": {
+          "accent": "#2563eb",
+          "accent-fill": "#2563eb",
+          "accent-soft": "#eaf1fe"
+        },
+        "dark": {
+          "accent": "#7eaaff",
+          "accent-fill": "#2f6bf0",
+          "accent-soft": "#1d2a44"
+        }
+      },
+      {
+        "name": "forest",
+        "displayName": "Forest",
+        "light": {
+          "accent": "#16723f",
+          "accent-fill": "#16723f",
+          "accent-soft": "#e6f4ec"
+        },
+        "dark": {
+          "accent": "#6fd3a0",
+          "accent-fill": "#1f7a4c",
+          "accent-soft": "#15302a"
+        }
+      },
+      {
+        "name": "crimson",
+        "displayName": "Crimson",
+        "light": {
+          "accent": "#b42343",
+          "accent-fill": "#b42343",
+          "accent-soft": "#fbe8ec"
+        },
+        "dark": {
+          "accent": "#ff9db0",
+          "accent-fill": "#b8324f",
+          "accent-soft": "#3a1a22"
+        }
+      },
+      {
+        "name": "ocean",
+        "displayName": "Ocean",
+        "light": {
+          "accent": "#0b6aa8",
+          "accent-fill": "#0b6aa8",
+          "accent-soft": "#e2f0f9"
+        },
+        "dark": {
+          "accent": "#86c6f5",
+          "accent-fill": "#166fab",
+          "accent-soft": "#12304a"
+        }
+      }
+    ],
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Welcome screen heading only."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Note title and page titles."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Notes-list heading and headings inside a note."
+      },
+      "title-small": {
+        "displayName": "Title Small",
+        "purpose": "Dialog and empty-state headings."
+      },
+      "note-body": {
+        "displayName": "Note Body",
+        "purpose": "The note editor and flashcard backs."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "All other UI text."
+      },
+      "meta": {
+        "displayName": "Meta",
+        "purpose": "Note-row snippets, note meta line, small buttons."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Footnotes, field help, assignment meta."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Sidebar section headings and inline time links."
+      },
+      "route-time": {
+        "displayName": "Route Time",
+        "purpose": "Mono tabular time beside each stamped line in the editor gutter; transcript times use it at 12px."
+      },
+      "code": {
+        "displayName": "Code",
+        "purpose": "Inline code in rendered markdown."
+      }
+    },
+    "shadows": [
+      {
+        "name": "float",
+        "value": "0 1px 2px rgba(16, 24, 40, .06), 0 8px 24px rgba(16, 24, 40, .10)",
+        "dark": "0 1px 2px rgba(0, 0, 0, .4), 0 10px 30px rgba(0, 0, 0, .45)",
+        "purpose": "Menus, dialogs, toasts, the zoomed diagram and the review flashcard."
+      },
+      {
+        "name": "hairline-ring",
+        "value": "0 0 0 1px var(--line)",
+        "purpose": "Outlines the open note row without a border or layout shift."
+      },
+      {
+        "name": "live-halo",
+        "value": "0 0 0 3px var(--danger-soft)",
+        "purpose": "Rings the newest route stop while recording."
+      },
+      {
+        "name": "dialog-backdrop",
+        "value": "rgba(20, 18, 24, .45)",
+        "purpose": "Scrim behind modal dialogs."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-fade",
+        "value": "150ms ease",
+        "purpose": "Border and background changes on inputs and note rows, divider highlight, chevron rotation."
+      },
+      {
+        "name": "progress",
+        "value": "width 300ms ease",
+        "purpose": "Progress bar fill."
+      },
+      {
+        "name": "record-pulse",
+        "value": "opacity 1.4s ease-in-out infinite",
+        "purpose": "The recording dot in the recording band; static in the sidebar box."
+      },
+      {
+        "name": "spinner",
+        "value": "rotate 0.8s linear infinite",
+        "purpose": "Working indicator."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "all animation and transition off",
+        "purpose": "Honours prefers-reduced-motion everywhere."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "editor-tight",
+        "value": "1180px",
+        "purpose": "Route gutter tightens from 92px to 88px."
+      },
+      {
+        "name": "panel-below",
+        "value": "1020px",
+        "purpose": "Study panel moves under the editor."
+      }
+    ],
+    "panes": [
+      {
+        "name": "sidebar",
+        "default": "250px",
+        "min": "180px",
+        "max": "420px"
+      },
+      {
+        "name": "notes-list",
+        "default": "272px",
+        "min": "200px",
+        "max": "520px"
+      },
+      {
+        "name": "study-panel",
+        "default": "340px",
+        "min": "280px",
+        "max": "760px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Default Button",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "Everyday action: raised fill, strong hairline border, 8px corners.",
+      "html": "<button class=\"ds-btn\">Pause</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 13px; border-radius: 8px; border: 1px solid var(--line-strong, #d0d5db); background: var(--raised, #ffffff); color: var(--ink, #1f2328); font: 500 14px/1.5 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); cursor: pointer; } .ds-btn:hover { background: var(--sunken, #f5f6f7); } .ds-btn:active { background: var(--line, #e5e7ea); } .ds-btn:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 2px; }"
+    },
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one main action in an area, in the accent fill.",
+      "html": "<button class=\"ds-btn-primary\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" aria-hidden=\"true\"><path d=\"M12 5v14M5 12h14\"/></svg><span>New note</span></button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 34px; padding: 0 13px; border-radius: 8px; border: 1px solid var(--accent-bg, #2563eb); background: var(--accent-bg, #2563eb); color: var(--on-accent, #ffffff); font: 500 14px/1.5 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); cursor: pointer; } .ds-btn-primary:hover { filter: brightness(1.08); } .ds-btn-primary:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Search and form field: 34px, strong hairline, accent focus ring.",
+      "html": "<label class=\"ds-search\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"m20 20-3.5-3.5\"/></svg><input class=\"ds-input\" placeholder=\"Search\" aria-label=\"Search\"></label>",
+      "css": ".ds-search { position: relative; display: block; color: var(--muted, #59636e); width: 220px; } .ds-search svg { position: absolute; left: 9px; top: 9px; pointer-events: none; } .ds-input { width: 100%; height: 34px; padding: 0 10px 0 30px; border-radius: 8px; border: 1px solid var(--line-strong, #d0d5db); background: var(--raised, #ffffff); color: var(--ink, #1f2328); font: 13px/1.5 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); caret-color: var(--accent, #2563eb); transition: border-color .15s; } .ds-input::placeholder { color: var(--muted, #59636e); } .ds-input:hover { border-color: var(--muted, #59636e); } .ds-input:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 2px; border-radius: 8px; }"
+    },
+    {
+      "name": "Sidebar Navigation",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Sidebar rows on the grey ground with 12x4 course line markers; the active row is accent on blue wash.",
+      "html": "<nav class=\"ds-nav\"><div class=\"ds-nav-h\">Courses</div><button class=\"ds-nav-item\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 3h9l4 4v14H6z\"/><path d=\"M9 12h6M9 16h6\"/></svg><span>All notes</span><span class=\"ds-count\">3</span></button><button class=\"ds-nav-item is-active\"><span class=\"ds-mark\"></span><span>CS135</span><span class=\"ds-count\">3</span></button><button class=\"ds-nav-item\"><span class=\"ds-mark\" style=\"--dot:#16723f\"></span><span>MATH137</span></button></nav>",
+      "css": ".ds-nav { display: flex; flex-direction: column; width: 240px; padding: 8px 10px; background: var(--side, #f4f5f7); font: 14px/1.5 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); } .ds-nav-h { font-weight: 600; font-size: 12px; color: var(--muted, #59636e); padding: 12px 10px 5px; } .ds-nav-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 10px; border: 0; border-radius: 7px; background: none; color: var(--ink, #1f2328); font: inherit; text-align: left; cursor: pointer; } .ds-nav-item svg { color: var(--muted, #59636e); } .ds-nav-item span:nth-child(2) { flex: 1; } .ds-nav-item:hover { background: var(--line, #e5e7ea); } .ds-nav-item.is-active { background: var(--accent-soft, #eaf1fe); color: var(--accent, #2563eb); font-weight: 600; } .ds-nav-item:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 2px; } .ds-mark { width: 12px; height: 4px; border-radius: 2px; background: var(--dot, var(--accent-bg, #2563eb)); flex: none; } .ds-count { font-size: 12px; color: var(--muted, #59636e); font-variant-numeric: tabular-nums; font-weight: 400; }"
+    },
+    {
+      "name": "Study Panel Tabs",
+      "kind": "nav",
+      "refersTo": "tab",
+      "description": "Soft-filled tabs on one row; tabs that do not fit move into More, which takes the selected fill when it holds the current tab.",
+      "html": "<div class=\"ds-tabs-row\"><div class=\"ds-tabs\" role=\"tablist\"><button class=\"ds-tab\" role=\"tab\" aria-selected=\"true\">Transcript</button><button class=\"ds-tab\" role=\"tab\" aria-selected=\"false\">Summary</button><button class=\"ds-tab\" role=\"tab\" aria-selected=\"false\">Ask</button></div><button class=\"ds-tab ds-tab-more\" aria-haspopup=\"menu\">More <svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m6 9 6 6 6-6\"/></svg></button></div>",
+      "css": ".ds-tabs-row { display: flex; align-items: center; width: 340px; padding: 0 4px 0 8px; border-bottom: 1px solid var(--line, #e5e7ea); } .ds-tabs { display: flex; flex: 1; min-width: 0; overflow: hidden; } .ds-tab { border: 0; background: none; padding: 5px 7px; margin: 6px 0; border-radius: 10px; color: var(--muted, #59636e); font: 500 13.5px/1.5 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); white-space: nowrap; cursor: pointer; } .ds-tab:hover { color: var(--ink, #1f2328); background: var(--sunken, #f5f6f7); } .ds-tab[aria-selected=\"true\"], .ds-tab-more.is-current { color: var(--accent, #2563eb); background: var(--accent-soft, #eaf1fe); font-weight: 600; } .ds-tab-more { display: inline-flex; align-items: center; gap: 3px; flex: none; } .ds-tab:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 2px; }"
+    },
+    {
+      "name": "Note Row",
+      "kind": "card",
+      "refersTo": "note-row",
+      "description": "Borderless rows on the list grey; the open note is lifted onto raised with a hairline ring; Recording is plain danger text.",
+      "html": "<div class=\"ds-rows\"><button class=\"ds-row\"><span class=\"ds-row-t\"><span class=\"ds-mark\"></span>Assignment 6 review</span><span class=\"ds-row-s\">Common mistakes in Q3 and how marks were lost.</span><span class=\"ds-row-m\">Nov 20, 2026 · 52:06</span></button><button class=\"ds-row is-active\"><span class=\"ds-row-t\"><span class=\"ds-mark\"></span>Structural recursion on lists</span><span class=\"ds-row-s\">Template follows the data definition.</span><span class=\"ds-row-m\">Nov 27, 2026 <span class=\"ds-badge\">Recording</span></span></button></div>",
+      "css": ".ds-rows { display: flex; flex-direction: column; gap: 8px; width: 260px; padding: 12px; background: var(--list, #fafafb); font: 14px/1.5 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); } .ds-row { display: flex; flex-direction: column; gap: 4px; text-align: left; padding: 12px 14px; border: 0; border-radius: 10px; background: transparent; color: var(--ink, #1f2328); font: inherit; cursor: pointer; transition: background-color .15s; } .ds-row:hover, .ds-row.is-active { background: var(--raised, #ffffff); } .ds-row.is-active { box-shadow: 0 0 0 1px var(--line, #e5e7ea); } .ds-row:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 2px; } .ds-row-t { display: flex; align-items: center; gap: 7px; font-weight: 600; } .ds-mark { width: 12px; height: 4px; border-radius: 2px; background: var(--accent-bg, #2563eb); flex: none; } .ds-row-s { color: var(--muted, #59636e); font-size: 13px; } .ds-row-m { display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--muted, #59636e); font-variant-numeric: tabular-nums; } .ds-badge { color: var(--danger, #b42318); font-weight: 600; }"
+    },
+    {
+      "name": "The Route",
+      "kind": "custom",
+      "refersTo": "route-stop",
+      "description": "Signature: mono times beside a 2px 45% accent route with a 10px hollow stop per stamped line; filled accent for the playing line, red for the newest line while recording.",
+      "html": "<div class=\"ds-route is-live\"><div class=\"ds-stop\" data-ts=\"2:14\">Template follows the data definition</div><div class=\"ds-stop is-now\" data-ts=\"11:03\">Base case empty, identity (0 for sum)</div><div class=\"ds-stop\" data-ts=\"34:12\">Count steps: each call shrinks rest by one</div></div>",
+      "css": ".ds-route { --gutter: 92px; --route: color-mix(in oklab, var(--accent, #2563eb) 45%, transparent); position: relative; padding: 8px 16px 8px var(--gutter); font: 16px/1.7 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); color: var(--ink, #1f2328); background: var(--surface, #ffffff) linear-gradient(var(--route), var(--route)) no-repeat calc(var(--gutter) - 21px) 0 / 2px 100%; } .ds-stop { position: relative; } .ds-stop + .ds-stop { margin-top: 6px; } .ds-stop::before { content: attr(data-ts); position: absolute; left: calc(-1 * var(--gutter) + 4px); top: .3em; width: 48px; text-align: right; font: 500 12.5px/1.5 ui-monospace, \"SF Mono\", \"Cascadia Mono\", Consolas, monospace; font-variant-numeric: tabular-nums; color: var(--muted, #59636e); cursor: pointer; } .ds-stop:hover::before { color: var(--accent, #2563eb); text-decoration: underline; } .ds-stop::after { content: \"\"; position: absolute; left: -25px; top: .55em; width: 10px; height: 10px; box-sizing: border-box; border-radius: 50%; background: var(--surface, #ffffff); border: 2px solid var(--accent, #2563eb); } .ds-stop.is-now { background: var(--accent-soft, #eaf1fe); border-radius: 4px; box-shadow: -6px 0 0 var(--accent-soft, #eaf1fe), 6px 0 0 var(--accent-soft, #eaf1fe); } .ds-stop.is-now::after { background: var(--accent, #2563eb); } .ds-route.is-live > .ds-stop:last-child::after { background: var(--record, #d92d20); border-color: var(--record, #d92d20); box-shadow: 0 0 0 3px var(--danger-soft, #fef3f2); } .ds-route.is-live > .ds-stop:last-child::before { color: var(--danger, #b42318); font-weight: 600; }"
+    },
+    {
+      "name": "Recording Band",
+      "kind": "custom",
+      "refersTo": "recording-band",
+      "description": "Signature: the band under the note header while recording: status tag, time, Pause and Stop; no meter.",
+      "html": "<div class=\"ds-band\"><span class=\"ds-rec-tag\"><span class=\"ds-rec-dot\"></span>Recording</span><span class=\"ds-rec-time\">34:13</span><span style=\"flex:1\"></span><button class=\"ds-band-btn\">Pause</button><button class=\"ds-band-btn ds-band-stop\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><rect x=\"6\" y=\"6\" width=\"12\" height=\"12\" rx=\"2\"/></svg>Stop</button></div>",
+      "css": ".ds-band { display: flex; align-items: center; gap: 12px; min-height: 54px; padding: 10px 32px; border-bottom: 1px solid var(--line, #e5e7ea); background: var(--list, #fafafb); color: var(--ink, #1f2328); font: 14px/1.5 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); } .ds-rec-tag { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: 10px; background: var(--danger-soft, #fef3f2); color: var(--danger, #b42318); } .ds-rec-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--record, #d92d20); animation: ds-pulse 1.4s ease-in-out infinite; } @keyframes ds-pulse { 50% { opacity: .35; } } @media (prefers-reduced-motion: reduce) { .ds-rec-dot { animation: none; } } .ds-rec-time { font: 600 16px var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); font-variant-numeric: tabular-nums; min-width: 52px; } .ds-band-btn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 13px; border-radius: 8px; border: 1px solid var(--line-strong, #d0d5db); background: var(--raised, #ffffff); color: var(--ink, #1f2328); font: 500 14px/1.5 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); cursor: pointer; } .ds-band-btn:hover { background: var(--sunken, #f5f6f7); } .ds-band-stop { background: var(--danger-bg, #c4291c); border-color: var(--danger-bg, #c4291c); color: #ffffff; } .ds-band-stop:hover { background: var(--danger-bg, #c4291c); filter: brightness(1.08); } .ds-band-btn:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 2px; }"
+    },
+    {
+      "name": "Linked Transcript",
+      "kind": "custom",
+      "refersTo": "transcript-row-linked",
+      "description": "Mono time over text, no speaker labels; rows around the caret line tint and merge. A first-run hint (first three linked notes) is pinned to the panel foot while anything is linked.",
+      "html": "<div class=\"ds-tr-panel\"><div class=\"ds-tr\"><div class=\"ds-tr-row\"><button class=\"ds-tr-t\">32:05</button>So the empty check is enough?</div><div class=\"ds-tr-row is-linked\"><button class=\"ds-tr-t\">32:11</button>Exactly. Empty, or a cons.</div><div class=\"ds-tr-row is-linked\"><button class=\"ds-tr-t\">33:40</button>Now count the steps.</div></div><p class=\"ds-tr-hint\">Tinted: what was being said around the line you’re on.</p></div>",
+      "css": ".ds-tr-panel { display: flex; flex-direction: column; width: 340px; height: 300px; overflow-y: auto; padding: 16px 20px 0; background: var(--surface, #ffffff); border-left: 1px solid var(--line, #e5e7ea); } .ds-tr { display: flex; flex-direction: column; flex: 1; font: 14px/1.55 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); color: var(--ink, #1f2328); } .ds-tr-row { display: flex; flex-direction: column; gap: 1px; padding: 7px 8px; border-radius: 8px; } .ds-tr-t { align-self: flex-start; border: 0; background: none; padding: 0; font: 500 12px/1.5 ui-monospace, \"SF Mono\", \"Cascadia Mono\", Consolas, monospace; font-variant-numeric: tabular-nums; color: var(--muted, #59636e); cursor: pointer; } .ds-tr-t:hover { color: var(--accent, #2563eb); text-decoration: underline; } .ds-tr-t:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 2px; } .ds-tr-row.is-linked { background: var(--accent-soft, #eaf1fe); } .ds-tr-row.is-linked .ds-tr-t { color: var(--accent, #2563eb); } .ds-tr-row.is-linked:has(+ .is-linked) { border-bottom-left-radius: 0; border-bottom-right-radius: 0; } .ds-tr-row.is-linked + .is-linked { border-top-left-radius: 0; border-top-right-radius: 0; } .ds-tr-hint { position: sticky; bottom: 0; margin: auto -20px 0; padding: 10px 28px; text-wrap: balance; font: 12.5px/1.5 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); color: var(--muted, #59636e); background: var(--surface, #ffffff); border-top: 1px solid var(--line, #e5e7ea); }"
+    },
+    {
+      "name": "Menu",
+      "kind": "custom",
+      "refersTo": "menu",
+      "description": "Floating menu: with dialogs and toasts, the only things that carry the Float shadow.",
+      "html": "<div class=\"ds-menu\" role=\"menu\"><button class=\"ds-menu-item\" role=\"menuitem\">Pin note</button><button class=\"ds-menu-item\" role=\"menuitem\">Move to course</button><div class=\"ds-menu-sep\"></div><button class=\"ds-menu-item ds-danger\" role=\"menuitem\">Delete note</button></div>",
+      "css": ".ds-menu { min-width: 190px; padding: 5px; background: var(--raised, #ffffff); border: 1px solid var(--line-strong, #d0d5db); border-radius: 8px; box-shadow: var(--shadow, 0 1px 2px rgba(16, 24, 40, .06), 0 8px 24px rgba(16, 24, 40, .10)); font: 14px/1.5 var(--sans, -apple-system, BlinkMacSystemFont, \"Segoe UI Variable Text\", \"Segoe UI\", system-ui, sans-serif); } .ds-menu-item { display: flex; width: 100%; padding: 6px 10px; border: 0; border-radius: 6px; background: none; color: var(--ink, #1f2328); font: inherit; text-align: left; cursor: pointer; } .ds-menu-item:hover, .ds-menu-item:focus-visible { background: var(--accent-soft, #eaf1fe); outline: none; } .ds-danger { color: var(--danger, #b42318); } .ds-menu-sep { height: 1px; background: var(--line, #e5e7ea); margin: 5px 4px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Lecture Line",
+    "overview": "**Creative North Star: \"The Lecture Line\"**\n\nListeNote looks like the notes app a student already knows, light and soft, at Apple Notes and Notion polish. A light grey sidebar holds courses and study tools where every notes app keeps them, a near-white column lists the course's notes as quiet rows, and a white page holds the note. Convention is the commitment, with one quiet ListeNote move: every line typed during a lecture is a stop on a thin blue line through the lecture, its time set in small mono figures beside it.\n\nThe system is neutral, soft and content-first. Three greys step from sidebar to list to page, one blue accent marks actions, selection, the route and the linked moment, and red is held back for recording and danger. Words are set in the operating system's own sans so the app feels native on macOS and Windows alike; times are set in the system mono. Panes are divided by 1px hairlines rather than shadows, and depth is reserved for things that float. Density is that of a desktop productivity tool: 14px body, 34px controls, 8px control corners and 10px soft surfaces.\n\nThe user rejected bold themes, square corners, colour bands and pill badges for this world, and the earlier warm-cream ground with serif headings before it.",
+    "keyCharacteristics": [
+      "Three resizable panes stepping from grey sidebar to near-white list to white note, divided by hairlines.",
+      "One accent colour (blue by default, user-selectable) for actions, selection, focus, the route and the linked transcript moment.",
+      "Red only for the recording state, destructive actions and errors.",
+      "System sans for words, system mono with tabular figures for lecture times.",
+      "The route: a 2px accent line in the editor gutter with a 10px stop at every stamped line.",
+      "Recording status, time, Pause and Stop sit in a band directly under the note header.",
+      "The study panel is a full-height column beside the note, and the caret's line is linked to its transcript moment on both sides.",
+      "Full light and dark themes that follow the operating system."
+    ],
+    "rules": [
+      {
+        "name": "The One Blue Rule",
+        "body": "One accent at a time, and only for actions, selection, focus, the route and the linked moment. Never use the accent for decoration, headings or illustration.",
+        "section": "colors"
+      },
+      {
+        "name": "The Red Means Recording Rule",
+        "body": "Red appears only for the live recording, destructive actions and errors. A red element anywhere else will be read as \"something is recording\" or \"something went wrong\".",
+        "section": "colors"
+      },
+      {
+        "name": "The Two Voices Rule",
+        "body": "Words are in the system sans; lecture times (editor gutter and transcript) and code are in the system mono. No third face, no decorative display face, no serif headings.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Time Rule",
+        "body": "Every time, duration and count (route times, transcript times, the recording timer, playback time, list counts) uses tabular figures so digits do not shuffle as they change.",
+        "section": "typography"
+      },
+      {
+        "name": "The Note Is Widest Rule",
+        "body": "The note pane takes whatever width is left after the sidebar, list and study panel; side panes never grow past their maximum to squeeze it.",
+        "section": "layout"
+      },
+      {
+        "name": "The Hairline Rule",
+        "body": "Structure is drawn with 1px lines and tonal steps, never with shadows. If it does not float over other content, it has no shadow.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do take every colour from the tokens and set both the light and the dark value together.",
+      "Do use the accent only for actions, selection, focus, the route and the linked moment (The One Blue Rule).",
+      "Do keep headings semibold (600) in the system sans, and set lecture times in the system mono with tabular figures.",
+      "Do draw structure with 1px hairlines and tonal steps; give controls 8px corners and selected or tagged soft surfaces 10px.",
+      "Do mark courses with the 12 by 4px coloured line.",
+      "Do reserve the Float shadow for menus, dialogs, toasts and other layers that sit above the panes.",
+      "Do keep sidebar and section labels in sentence case at 12px semibold muted.",
+      "Do use 16 to 18px stroke icons (1.8 stroke, round caps) drawn inline as SVG.",
+      "Do keep text pairings at 4.5:1 or better in both themes, including text on record and danger fills."
+    ],
+    "donts": [
+      "Don't bring back the warm-cream ground, serif headings, bold themes or square corners; the user rejected them.",
+      "Don't use tinted colour bands or pill badges; the recording band stays list grey, and status is a soft 10px tag or plain coloured text.",
+      "Don't mark courses with dots or pills.",
+      "Don't add a third typeface or a decorative display face.",
+      "Don't use red for anything but recording, destructive actions and errors (The Red Means Recording Rule).",
+      "Don't put shadows on panes, list rows or cards (The Hairline Rule).",
+      "Don't add uppercase eyebrow labels, kickers or tracked-out small caps above headings.",
+      "Don't introduce novelty styling (gradients, glass, oversized radii, coloured backgrounds behind sections) that the platform notes apps would not use."
+    ]
+  }
+}

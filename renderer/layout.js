@@ -7,13 +7,20 @@ import { h, icon } from './dom.js';
 
 const PANES = {
   side: { label: 'sidebar', min: 180, max: 420, def: 250 },
-  list: { label: 'notes list', min: 200, max: 520, def: 300 },
-  panel: { label: 'study panel', min: 280, max: 760, def: 400 },
+  list: { label: 'notes list', min: 200, max: 520, def: 272 },
+  panel: { label: 'study panel', min: 280, max: 760, def: 340 },
 };
 
 function state() {
   const st = S.lib.settings;
   if (!st.layout) st.layout = {};
+  // One-time move off the old default widths, so the note becomes the widest pane.
+  // shortcut: a width hand-set to exactly 300 or 400 moves too; add a "touched" flag if that matters.
+  if (!st.layout.v) {
+    if (st.layout.list === 300) st.layout.list = PANES.list.def;
+    if (st.layout.panel === 400) st.layout.panel = PANES.panel.def;
+    st.layout.v = 2;
+  }
   for (const [k, p] of Object.entries(PANES)) {
     if (typeof st.layout[k] !== 'number') st.layout[k] = p.def;
     st.layout[`${k}Hidden`] = !!st.layout[`${k}Hidden`];

@@ -37,7 +37,8 @@ export function currentNoteId() {
 export function unmountNote() {
   if (!ctx) return;
   for (const off of ctx.offs) off();
-  relock(ctx.note);
+  // A locked note stays open while it records, or its live transcript would be dropped; stopRecording relocks it.
+  if (!(recorder.active && recorder.noteId === ctx.note.id) && stoppingId !== ctx.note.id) relock(ctx.note);
   cancelAnimationFrame(ctx.raf);
   if (ctx.player) ctx.player.destroy();
   ctx = null;
@@ -76,7 +77,9 @@ export function mountNote(container, note, { viewer = false } = {}) {
   [['mic', 'Microphone'], ['both', 'Mic + computer audio'], ['system', 'Computer audio only']].map(([v, l]) => h('option', { value: v, selected: (S.lib.settings.recordSource || 'mic') === v, text: l })));
   c.attachRow = h('div', { class: 'attach-row' });
   const head = h('header', { class: 'note-head' },
-    h('div', { class: 'note-head-row' }, h('div', { class: 'title-wrap' }, title, c.moreBtn), viewer ? null : [sourceSelect, c.recordBtn]),
+    h('div', { class: 'note-head-row' },
+      viewer ? null : iconButton('chevron', 'Show notes list', () => togglePane('list'), { class: 'side-toggle show-list', size: 16 }),
+      h('div', { class: 'title-wrap' }, title, c.moreBtn), viewer ? null : [sourceSelect, c.recordBtn]),
     h('div', { class: 'note-meta' }, courseSelect,
       viewer ? h('span', { class: 'meta-text', text: fmtDate(note.created, { weekday: true }) })
         : c.dateBtn = h('button', { type: 'button', class: 'meta-text meta-date', title: 'Change the lecture date', onClick: () => changeDate() }, fmtDate(note.created, { weekday: true })),
@@ -123,17 +126,55 @@ export function mountNote(container, note, { viewer = false } = {}) {
         e.preventDefault();
         const next = TABS[(i + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length];
         selectTab(next.id);
-        c.tabButtons[TABS.indexOf(next)].focus();
+        const btn = c.tabButtons[TABS.indexOf(next)];
+        (btn.hidden ? c.moreTab : btn).focus();
       }
     },
   }, t.label));
   c.panel = h('div', { class: 'panel-body', role: 'tabpanel', id: 'tabpanel', tabindex: '0' });
-  const side = h('aside', { class: 'panel', 'aria-label': 'Study tools' }, h('div', { class: 'tabs-row' }, h('div', { class: 'tabs', role: 'tablist', 'aria-label': 'Study tools' }, c.tabButtons),
+  // Tabs that do not fit the panel's width move into a More menu, kept apart from the hide arrow.
+  const tabList = h('div', { class: 'tabs', role: 'tablist', 'aria-label': 'Study tools' }, c.tabButtons);
+  c.moreTab = h('button', { type: 'button', class: 'tab tab-more', 'aria-haspopup': 'menu', hidden: true,
+    onClick: () => showMenu(c.moreTab, TABS.filter((t, i) => c.tabButtons[i].hidden).map((t) => ({ label: t.label, checked: c.tab === t.id, onSelect: () => selectTab(t.id) }))) },
+  h('span', { text: 'More' }), icon('chevron', 12));
+  c.moreTab.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    const shown = TABS.filter((t, i) => !c.tabButtons[i].hidden);
+    const next = e.key === 'ArrowLeft' ? shown[shown.length - 1] : shown[0];
+    selectTab(next.id);
+    c.tabButtons[TABS.indexOf(next)].focus();
+  });
+  c.fitTabs = () => {
+    for (const b of c.tabButtons) b.hidden = false;
+    c.moreTab.hidden = true;
+    for (let i = TABS.length - 1; i > 0 && tabList.scrollWidth > tabList.clientWidth; i--) {
+      c.tabButtons[i].hidden = true;
+      c.moreTab.hidden = false;
+    }
+    c.moreTab.classList.toggle('current', TABS.some((t, i) => c.tabButtons[i].hidden && t.id === c.tab));
+  };
+  const fit = new ResizeObserver(() => c.fitTabs());
+  fit.observe(tabList);
+  c.offs.push(() => fit.disconnect());
+  const side = h('aside', { class: 'panel', 'aria-label': 'Study tools' }, h('div', { class: 'tabs-row' }, tabList, c.moreTab,
     iconButton('chevron', 'Hide study panel', () => togglePane('panel'), { class: 'side-toggle hide-panel', size: 16 })), c.panel);
 
   c.transport = h('footer', { class: 'transport' });
-  container.append(h('div', { class: 'note' }, head, h('div', { class: 'note-body' }, editorPane, side, separator('panel', { fromRight: true, tab: false }),
-    iconButton('chevron', 'Show study panel', () => togglePane('panel'), { class: 'side-toggle show-panel', size: 16 })), c.transport));
+  container.append(h('div', { class: 'note' }, head, c.transport, h('div', { class: 'note-body' }, editorPane, side, separator('panel', { fromRight: true, tab: false }),
+    iconButton('chevron', 'Show study panel', () => togglePane('panel'), { class: 'side-toggle show-panel', size: 16 }))));
+
+  // Linked moment: the transcript around the line the caret is on is tinted.
+  const onSel = () => { if (ctx === c) linkTranscript(); };
+  document.addEventListener('selectionchange', onSel);
+  // Styles the linked note line by its stamp, so no class lands in the saved note HTML.
+  // A constructed sheet, because the window's CSP (style-src 'self') blocks inline <style>.
+  c.linkSheet = new CSSStyleSheet();
+  document.adoptedStyleSheets = [...document.adoptedStyleSheets, c.linkSheet];
+  c.offs.push(() => {
+    document.removeEventListener('selectionchange', onSel);
+    document.adoptedStyleSheets = document.adoptedStyleSheets.filter((x) => x !== c.linkSheet);
+  });
 
   c.offs.push(
     bus.on('recording', () => { if (ctx === c) { renderRecordButton(); renderTransport(); } }),
@@ -283,11 +324,14 @@ function renderRecordButton() {
   c.recordBtn.classList.toggle('is-recording', mine);
   c.recordBtn.append(icon(mine ? 'stop' : 'mic', 16), h('span', { text: mine ? 'Stop' : 'Record' }));
   c.recordBtn.setAttribute('aria-label', mine ? 'Stop recording' : 'Start recording');
+  // The record bar below holds Stop while this note records; one Stop control is enough.
+  c.recordBtn.hidden = mine;
+  c.editor.el.classList.toggle('live', mine);
 }
 
 export async function toggleRecord() {
   const c = ctx;
-  if (!c) return;
+  if (!c || stoppingId) return; // starting now would delete the file the stop is still finishing
   const { note } = c;
   if (recorder.active) {
     if (recorder.noteId !== note.id) { toast('Another note is recording. Stop it first.', 'error'); return; }
@@ -326,9 +370,13 @@ export async function toggleRecord() {
   }
 }
 
-async function stopRecording() {
-  const c = ctx;
-  const { note } = c;
+// Works from any view: the recording note need not be the one on screen.
+let stoppingId = null;
+export const isStopping = () => stoppingId !== null;
+export async function stopRecording() {
+  const note = S.notes[recorder.noteId];
+  if (!note || stoppingId) return;
+  stoppingId = note.id;
   try {
     const result = await recorder.stop();
     note.audio = { ext: result.ext, mime: result.mime, duration: result.duration };
@@ -336,12 +384,19 @@ async function stopRecording() {
     note.updated = Date.now();
     saveNote(note.id, { now: true });
     bus.emit('library');
-    if (ctx === c) { renderMeta(); renderPanel(); await loadPlayer(); }
+    const c = ctx;
+    if (c && c.note === note) { renderMeta(); renderPanel(); await loadPlayer(); }
+    else relock(note);
+    const sealed = note.locked && !note._open;
     if (result.liveTranscript) toast('Recording and live transcript saved.');
-    else if (S.lib.settings.autoTranscribe) startTranscription(note);
-    else toast('Recording saved. Open the Transcript tab to transcribe it.');
+    else if (S.lib.settings.autoTranscribe && !sealed) startTranscription(note);
+    else toast(sealed ? 'Recording saved. Open the note to transcribe it.' : 'Recording saved. Open the Transcript tab to transcribe it.');
   } catch (err) {
+    // A locked note left open for the recording must not stay readable after a failed stop.
+    if (!(ctx && ctx.note === note)) relock(note);
     toast(errorMessage(err), 'error');
+  } finally {
+    stoppingId = null;
   }
 }
 
@@ -349,7 +404,8 @@ export async function importAudio({ fromUrl = false } = {}) {
   const c = ctx;
   if (!c) return;
   const { note } = c;
-  if (note.audio || recorder.active) { toast('This note already has a recording.', 'error'); return; }
+  if (recorder.active) { toast('Stop the current recording before importing audio.', 'error'); return; }
+  if (note.audio) { toast('This note already has a recording.', 'error'); return; }
   try {
     let files;
     if (fromUrl) {
@@ -404,7 +460,7 @@ async function loadPlayer() {
     if (S.lib.settings.outputId) player.setOutput(S.lib.settings.outputId);
     if ((S.lib.settings.eq || []).some(Boolean)) player.setEq(S.lib.settings.eq);
     c.playerState = 'ready';
-    if (S.pendingSeek !== null && S.pendingSeek !== undefined) { player.seek(S.pendingSeek, { play: true }); S.pendingSeek = null; }
+    if (S.pendingSeek !== null && S.pendingSeek !== undefined) { player.seek(S.pendingSeek, { play: !recorder.active }); S.pendingSeek = null; }
   } catch (err) {
     if (ctx !== c) return;
     c.playerState = 'error';
@@ -421,11 +477,19 @@ export function seek(t) {
     if (c && recorder.active) toast('Stop recording to play back.');
     return;
   }
+  if (playBlocked()) { c.player.seek(t); return; }
   c.player.seek(t, { play: true });
 }
 
+// Playback during a recording would be captured into it (speakers, or computer audio as a source).
+function playBlocked() {
+  if (!recorder.active) return false;
+  toast('Stop recording to play back. Playback would be captured in the recording.');
+  return true;
+}
+
 export function togglePlay() {
-  if (ctx && ctx.player && ctx.playerState === 'ready') ctx.player.toggle();
+  if (ctx && ctx.player && ctx.playerState === 'ready' && (ctx.player.playing || !playBlocked())) ctx.player.toggle();
 }
 
 export function playFromCaret() {
@@ -476,13 +540,12 @@ function renderTransport() {
 
   if (recordingHere) {
     const timer = h('span', { class: 'rec-time', role: 'timer', 'aria-label': 'Recording time' }, '0:00');
-    const meter = h('span', { class: 'meter-fill' });
     c.transport.className = 'transport is-recording';
     c.transport.append(
-      h('span', { class: `rec-dot ${recorder.paused ? 'paused' : ''}`, 'aria-hidden': 'true' }),
-      h('strong', { text: recorder.paused ? 'Paused' : 'Recording' }),
+      h('span', { class: `rec-tag ${recorder.paused ? 'paused' : ''}` },
+        h('span', { class: `rec-dot ${recorder.paused ? 'paused' : ''}`, 'aria-hidden': 'true' }),
+        h('strong', { text: recorder.paused ? 'Paused' : 'Recording' })),
       timer,
-      h('span', { class: 'meter', 'aria-hidden': 'true' }, meter),
       h('span', { class: 'spacer' }),
       button(recorder.paused ? 'Resume' : 'Pause', () => (recorder.paused ? recorder.resume() : recorder.pause())),
       button('Stop', () => stopRecording(), { kind: 'danger', iconName: 'stop' }),
@@ -490,7 +553,6 @@ function renderTransport() {
     const tick = () => {
       if (ctx !== c || !recorder.active) return;
       timer.textContent = fmtTime(recorder.elapsed());
-      meter.style.setProperty('width', `${Math.round((recorder.paused ? 0 : recorder.level()) * 100)}%`);
       c.raf = requestAnimationFrame(tick);
     };
     tick();
@@ -513,7 +575,7 @@ function renderTransport() {
 
   const skipBy = Number(S.lib.settings.skipSeconds) || 10;
   const player = c.player;
-  c.playBtn = h('button', { type: 'button', class: 'icon-btn play-btn', onClick: () => player.toggle() });
+  c.playBtn = h('button', { type: 'button', class: 'icon-btn play-btn', onClick: () => togglePlay() });
   c.seekBar = h('input', {
     type: 'range', class: 'seek', min: String(player.start), max: String(player.end || 0), step: '0.1', value: String(player.time), 'aria-label': 'Position in recording',
     onInput: () => { c.seeking = true; if (c.timeLabel) c.timeLabel.textContent = `${fmtTime(Number(c.seekBar.value))} / ${fmtTime(player.duration)}`; },
@@ -786,11 +848,11 @@ async function toWebPage(note, c) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(note.title || 'Lecture notes')}</title>
 <style>
-body{font:16px/1.6 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif;max-width:760px;margin:0 auto;padding:24px 16px 120px;color:#1b1a1f;background:#fffdf9}
-h1{font:600 28px Georgia,serif;margin:0 0 4px}h2{font:600 19px Georgia,serif;margin:28px 0 8px;border-bottom:1px solid #ddd;padding-bottom:4px}
-.meta{color:#5c5a66}.t{display:inline-block;min-width:48px;font:600 12px sans-serif;color:#4338ca;background:#e9e7fb;border-radius:5px;padding:0 5px;margin-right:8px;text-decoration:none}
+body{font:16px/1.6 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif;max-width:760px;margin:0 auto;padding:24px 16px 120px;color:#1f2328;background:#ffffff}
+h1{font:700 28px -apple-system,"Segoe UI",Helvetica,Arial,sans-serif;letter-spacing:-.015em;margin:0 0 4px}h2{font:650 19px -apple-system,"Segoe UI",Helvetica,Arial,sans-serif;margin:28px 0 8px;border-bottom:1px solid #ddd;padding-bottom:4px}
+.meta{color:#59636e}.t{display:inline-block;min-width:48px;font:600 12px sans-serif;color:#2563eb;background:#eaf1fe;border-radius:5px;padding:0 5px;margin-right:8px;text-decoration:none}
 img{max-width:100%}mark{background:#ffe58a}audio{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;width:min(720px,calc(100% - 32px))}
-@media(prefers-color-scheme:dark){body{background:#17161a;color:#ece9e4}.meta{color:#aaa6b3}.t{background:#2b2950;color:#b9b4ff}mark{background:#6b5a12}}
+@media(prefers-color-scheme:dark){body{background:#1b1c1e;color:#ececee}.meta{color:#a3a8af}.t{background:#1d2a44;color:#7eaaff}mark{background:#5e4f10}}
 </style></head><body>${body.innerHTML}${audio}
 <script>document.addEventListener('click',function(e){var t=e.target.closest('[data-t]');var a=document.getElementById('a');if(!t||!a)return;e.preventDefault();a.currentTime=+t.dataset.t;a.play();});</script>
 </body></html>`;
@@ -823,6 +885,7 @@ function selectTab(id) {
     c.tabButtons[i].tabIndex = selected ? 0 : -1;
   }
   c.panel.setAttribute('aria-labelledby', `tab-${id}`);
+  if (c.fitTabs) c.fitTabs();
   renderPanel();
 }
 
@@ -912,6 +975,28 @@ function startTranscription(note) {
   }).catch((err) => toast(errorMessage(err), 'error'));
 }
 
+// Tint what was being said when the caret's line was typed: 45 s before its stamp (live transcription lags) to 5 s after.
+function linkTranscript() {
+  const c = ctx;
+  if (!c || !c.trRows) return;
+  const sel = document.getSelection();
+  const t = sel && sel.anchorNode && c.editor.el.contains(sel.anchorNode) ? c.editor.caretTime() : null;
+  let lastLinked = null;
+  for (const r of c.trRows) {
+    const on = t !== null && r.s >= t - 45 && r.s <= t + 5;
+    r.el.classList.toggle('linked', on);
+    if (on) lastLinked = r.el;
+  }
+  // The note side of the link: tint the caret's stamped line and fill its stop.
+  c.linkSheet.replaceSync(lastLinked ? `.editor > [data-t="${t}"] { background: var(--accent-soft); border-radius: 4px; box-shadow: -6px 0 0 var(--accent-soft), 6px 0 0 var(--accent-soft); } .editor > [data-t="${t}"]::after { background: var(--accent); }` : '');
+  // First-run hint, pinned to the panel's foot so the rows never move; retired after three notes.
+  const st = S.lib.settings;
+  if (lastLinked && !c.hintCounted && (st.linkHintShown || 0) < 3) { c.hintCounted = true; st.linkHintShown = (st.linkHintShown || 0) + 1; saveLib(); }
+  let hint = c.panel.querySelector('.link-hint');
+  if (!hint && c.hintCounted) { hint = h('p', { class: 'link-hint', text: 'Tinted: what was being said around the line you’re on.' }); c.panel.append(hint); }
+  if (hint) hint.hidden = !lastLinked;
+}
+
 function renderTranscript() {
   const c = ctx;
   const { note } = c;
@@ -977,35 +1062,18 @@ function renderTranscript() {
     const playable = c.playerState === 'ready';
     for (const seg of note.transcript) {
       if (q && !seg.text.toLowerCase().includes(q)) continue;
-      const prev = c.trRows.length ? c.trRows[c.trRows.length - 1].spk : undefined;
-      let chip = null;
-      if (note.speakers && seg.spk != null && (seg.spk !== prev || q)) {
-        chip = h('button', { type: 'button', class: 'speaker', 'aria-haspopup': 'menu', title: 'Assign speaker', onClick: () => speakerMenu(chip, seg) }, note.speakers[seg.spk] || `Speaker ${seg.spk + 1}`);
-      }
       const el = h('div', { class: 'tr-row' },
-        h('button', { type: 'button', class: 'ts', disabled: !playable, 'aria-label': `Play from ${fmtTime(seg.s)}`, onClick: () => seek(seg.s) }, fmtTime(seg.s)),
-        h('span', { class: 'tr-text' }, chip, seg.text));
+        h('div', { class: 'tr-meta' },
+          h('button', { type: 'button', class: 'ts', disabled: !playable, 'aria-label': `Play from ${fmtTime(seg.s)}`, onClick: () => seek(seg.s) }, fmtTime(seg.s))),
+        h('span', { class: 'tr-text' }, seg.text));
       rowsEl.append(el);
-      c.trRows.push({ s: seg.s, el, spk: seg.spk });
+      c.trRows.push({ s: seg.s, el });
     }
     count.textContent = q ? `${c.trRows.length} matching line${c.trRows.length === 1 ? '' : 's'}` : '';
+    linkTranscript();
     if (q && !c.trRows.length) rowsEl.append(h('p', { class: 'footnote', text: 'No lines match.' }));
   }
   drawRows();
-
-  // Name a speaker everywhere, or move this line to another speaker.
-  function speakerMenu(anchor, seg) {
-    const names = note.speakers;
-    showMenu(anchor, [
-      ...names.map((name, i) => ({ label: name, checked: seg.spk === i, onSelect: () => { seg.spk = i; touchNote(note); drawRows(); } })),
-      { label: 'New speaker', icon: 'plus', onSelect: () => { names.push(`Speaker ${names.length + 1}`); seg.spk = names.length - 1; touchNote(note); drawRows(); } },
-      'sep',
-      { label: `Rename "${names[seg.spk]}"…`, icon: 'edit', onSelect: async () => {
-        const out = await formDialog({ title: 'Name this speaker', fields: [{ name: 'n', label: 'Name', value: names[seg.spk], required: true, placeholder: 'Prof. Rivera' }] });
-        if (out && out.n) { names[seg.spk] = out.n.slice(0, 60); touchNote(note); drawRows(); }
-      } },
-    ]);
-  }
 }
 
 // --------------------------------------------------------------- summary ---
